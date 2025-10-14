@@ -1,0 +1,562 @@
+{
+  "version": "1.0",
+  "name": "campaign",
+  "nodes": [
+    {
+      "id": "node_0",
+      "type": "email",
+      "position": {
+        "x": -74.80175781289017,
+        "y": -109.38699513607706
+      },
+      "data": {
+        "label": "Email Node",
+        "content": "",
+        "description": "",
+        "subject": "",
+        "emailContent": ""
+      },
+      "width": 200,
+      "height": 88,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -74.80175781289017,
+        "y": -109.38699513607706
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_1",
+      "type": "survey",
+      "position": {
+        "x": -84.21652048970344,
+        "y": 16.358699390630008
+      },
+      "data": {
+        "label": "Survey Node",
+        "content": "",
+        "description": "",
+        "questions": [
+          {
+            "id": "q_1",
+            "text": "",
+            "questionType": "radio",
+            "responseOptions": [
+              {
+                "id": "q_1_opt_1",
+                "text": "Option 1",
+                "points": 0
+              },
+              {
+                "id": "q_1_opt_2",
+                "text": "Option 2",
+                "points": 0
+              },
+              {
+                "id": "q_1_opt_1760468398878",
+                "text": "Option 3",
+                "points": 0
+              },
+              {
+                "id": "q_1_opt_1760468400788",
+                "text": "Option 4",
+                "points": 0
+              },
+              {
+                "id": "q_1_opt_1760468403544",
+                "text": "Option 5",
+                "points": 0
+              }
+            ]
+          }
+        ],
+        "responsePaths": [
+          {
+            "id": "path_1",
+            "label": "Path 1",
+            "mappedOptions": [
+              "q_1_opt_1"
+            ],
+            "color": "#10b981",
+            "scoreMin": null,
+            "scoreMax": null,
+            "advancedRules": {
+              "enabled": false,
+              "requireAll": [],
+              "requireAny": [],
+              "requireNone": []
+            }
+          },
+          {
+            "id": "path_2",
+            "label": "Path 2",
+            "mappedOptions": [
+              "q_1_opt_2"
+            ],
+            "color": "#3b82f6",
+            "scoreMin": null,
+            "scoreMax": null,
+            "advancedRules": {
+              "enabled": false,
+              "requireAll": [],
+              "requireAny": [],
+              "requireNone": []
+            }
+          },
+          {
+            "id": "path_1760468505582",
+            "label": "Path 3",
+            "mappedOptions": [
+              "q_1_opt_1760468398878"
+            ],
+            "color": "#f59e0b"
+          },
+          {
+            "id": "path_1760468505814",
+            "label": "Path 4",
+            "mappedOptions": [
+              "q_1_opt_1760468400788"
+            ],
+            "color": "#ef4444"
+          },
+          {
+            "id": "path_1760468506048",
+            "label": "Path 5",
+            "mappedOptions": [
+              "q_1_opt_1760468403544"
+            ],
+            "color": "#8b5cf6"
+          }
+        ]
+      },
+      "width": 220,
+      "height": 248,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -84.21652048970344,
+        "y": 16.358699390630008
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_2",
+      "type": "email",
+      "position": {
+        "x": -288.5913816968331,
+        "y": 309.0076443696088
+      },
+      "data": {
+        "label": "Email Node",
+        "content": "",
+        "description": "",
+        "subject": "",
+        "emailContent": ""
+      },
+      "width": 200,
+      "height": 88,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -288.5913816968331,
+        "y": 309.0076443696088
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_3",
+      "type": "email",
+      "position": {
+        "x": -502.2492757262816,
+        "y": 307.8589460146118
+      },
+      "data": {
+        "label": "Email Node",
+        "content": "",
+        "description": "",
+        "subject": "",
+        "emailContent": ""
+      },
+      "width": 200,
+      "height": 88,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -502.2492757262816,
+        "y": 307.8589460146118
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_4",
+      "type": "email",
+      "position": {
+        "x": 144.4678981370489,
+        "y": 306.71024765961477
+      },
+      "data": {
+        "label": "Email Node",
+        "content": "",
+        "description": "",
+        "subject": "",
+        "emailContent": ""
+      },
+      "width": 200,
+      "height": 88,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 144.4678981370489,
+        "y": 306.71024765961477
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_5",
+      "type": "email",
+      "position": {
+        "x": -72.63609095739065,
+        "y": 307.8589460146118
+      },
+      "data": {
+        "label": "Email Node",
+        "content": "",
+        "description": "",
+        "subject": "",
+        "emailContent": ""
+      },
+      "width": 200,
+      "height": 88,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -72.63609095739065,
+        "y": 307.8589460146118
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_6",
+      "type": "email",
+      "position": {
+        "x": 360.4231888764914,
+        "y": 306.71024765961477
+      },
+      "data": {
+        "label": "Email Node",
+        "content": "",
+        "description": "",
+        "subject": "",
+        "emailContent": ""
+      },
+      "width": 200,
+      "height": 88,
+      "selected": true,
+      "positionAbsolute": {
+        "x": 360.4231888764914,
+        "y": 306.71024765961477
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_7",
+      "type": "email",
+      "position": {
+        "x": -72.63609095739065,
+        "y": 446.85144696925283
+      },
+      "data": {
+        "label": "Email Node",
+        "content": "",
+        "description": "",
+        "subject": "",
+        "emailContent": ""
+      },
+      "width": 200,
+      "height": 88,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -72.63609095739065,
+        "y": 446.85144696925283
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_8",
+      "type": "survey",
+      "position": {
+        "x": -81.60270151777024,
+        "y": 568.5652275743984
+      },
+      "data": {
+        "label": "Survey Node",
+        "content": "",
+        "description": "",
+        "questions": [
+          {
+            "id": "q_1",
+            "text": "",
+            "questionType": "radio",
+            "responseOptions": [
+              {
+                "id": "q_1_opt_1",
+                "text": "Option 1",
+                "points": 0
+              },
+              {
+                "id": "q_1_opt_2",
+                "text": "Option 2",
+                "points": 0
+              }
+            ]
+          }
+        ],
+        "responsePaths": [
+          {
+            "id": "path_1",
+            "label": "Path 1",
+            "mappedOptions": [
+              "q_1_opt_1"
+            ],
+            "color": "#10b981",
+            "scoreMin": null,
+            "scoreMax": null,
+            "advancedRules": {
+              "enabled": false,
+              "requireAll": [],
+              "requireAny": [],
+              "requireNone": []
+            }
+          },
+          {
+            "id": "path_2",
+            "label": "Path 2",
+            "mappedOptions": [
+              "q_1_opt_2"
+            ],
+            "color": "#3b82f6",
+            "scoreMin": null,
+            "scoreMax": null,
+            "advancedRules": {
+              "enabled": false,
+              "requireAll": [],
+              "requireAny": [],
+              "requireNone": []
+            }
+          }
+        ]
+      },
+      "width": 220,
+      "height": 164,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -81.60270151777024,
+        "y": 568.5652275743984
+      },
+      "dragging": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "node_1",
+      "sourceHandle": "path_1760468505582",
+      "target": "node_5",
+      "targetHandle": null,
+      "label": "Path 3",
+      "style": {
+        "stroke": "#f59e0b"
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "id": "reactflow__edge-node_1path_1760468505582-node_5"
+    },
+    {
+      "source": "node_0",
+      "sourceHandle": null,
+      "target": "node_1",
+      "targetHandle": null,
+      "label": "",
+      "style": {},
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "id": "reactflow__edge-node_0-node_1"
+    },
+    {
+      "source": "node_1",
+      "sourceHandle": "path_1",
+      "target": "node_3",
+      "targetHandle": null,
+      "label": "Path 1",
+      "style": {
+        "stroke": "#10b981"
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "id": "reactflow__edge-node_1path_1-node_3"
+    },
+    {
+      "source": "node_1",
+      "sourceHandle": "path_2",
+      "target": "node_2",
+      "targetHandle": null,
+      "label": "Path 2",
+      "style": {
+        "stroke": "#3b82f6"
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "id": "reactflow__edge-node_1path_2-node_2"
+    },
+    {
+      "source": "node_1",
+      "sourceHandle": "path_1760468505814",
+      "target": "node_4",
+      "targetHandle": null,
+      "label": "Path 4",
+      "style": {
+        "stroke": "#ef4444"
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "id": "reactflow__edge-node_1path_1760468505814-node_4"
+    },
+    {
+      "source": "node_1",
+      "sourceHandle": "path_1760468506048",
+      "target": "node_6",
+      "targetHandle": null,
+      "label": "Path 5",
+      "style": {
+        "stroke": "#8b5cf6"
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "id": "reactflow__edge-node_1path_1760468506048-node_6"
+    },
+    {
+      "source": "node_3",
+      "sourceHandle": null,
+      "target": "node_7",
+      "targetHandle": null,
+      "label": "",
+      "style": {},
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "id": "reactflow__edge-node_3-node_7"
+    },
+    {
+      "source": "node_2",
+      "sourceHandle": null,
+      "target": "node_7",
+      "targetHandle": null,
+      "label": "",
+      "style": {},
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "id": "reactflow__edge-node_2-node_7"
+    },
+    {
+      "source": "node_5",
+      "sourceHandle": null,
+      "target": "node_7",
+      "targetHandle": null,
+      "label": "",
+      "style": {},
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "id": "reactflow__edge-node_5-node_7"
+    },
+    {
+      "source": "node_4",
+      "sourceHandle": null,
+      "target": "node_7",
+      "targetHandle": null,
+      "label": "",
+      "style": {},
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "id": "reactflow__edge-node_4-node_7"
+    },
+    {
+      "source": "node_6",
+      "sourceHandle": null,
+      "target": "node_7",
+      "targetHandle": null,
+      "label": "",
+      "style": {},
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "id": "reactflow__edge-node_6-node_7"
+    }
+  ],
+  "exportDate": "2025-10-14T19:21:40.745Z",
+  "metadata": {
+    "nodeCount": 9,
+    "edgeCount": 11,
+    "nodeTypes": [
+      "email",
+      "survey"
+    ]
+  }
+}
