@@ -1,0 +1,737 @@
+{
+  "version": "1.0",
+  "campaignName": "DMS 101 Drip Campaign",
+  "nodes": [
+    {
+      "id": "node_0",
+      "type": "email",
+      "position": {
+        "x": -96.58906678394561,
+        "y": -258.4838941369411
+      },
+      "data": {
+        "label": "Email Node",
+        "content": "",
+        "description": "",
+        "subject": "The 4 stages of document chaos (you're probably in #2)",
+        "emailContent": "<p>Hi Wim,</p><p>Research shows disorganized data can cost businesses 20-30% of their annual revenue.</p><p>That number surprised us, too. But when you add up:</p><ul><li>Hours spent searching for files</li><li>Duplicate work because no one can find the original</li><li>Missed deadlines from version control chaos</li><li>Security risks from uncontrolled access</li></ul><p>...it starts to make sense.</p><p><strong>Most companies are stuck between Stage 2 and Stage 3 of document maturity</strong> - organized enough to avoid crisis, but not enough to stop the productivity drain.</p><p><strong>Where are you?</strong></p><p>Take our Quick Document Health Check - <strong>three simple questions (15 seconds each)</strong> that help you identify:</p><ul><li>Your current document maturity stage</li><li>What your document chaos is actually costing</li><li>Your biggest obstacle to fixing it</li></ul><p>After each question, you'll get personalized insights specific to your answer - not generic advice, but targeted recommendations for your situation.</p><p><strong>[TAKE THE QUICK ASSESSMENT →]</strong></p><p><strong>Total time:</strong> About 3 minutes spread across the next week. Each answer unlocks specific insights you can use immediately.</p><p>Best,</p><p>Allie and the DX Team</p><p>P.S. - This isn't a sales pitch. It's a diagnostic tool. You'll learn something useful regardless of whether DocuXplorer is a fit for you.</p>",
+        "subjectVariants": [
+          {
+            "id": "A",
+            "subject": "The 4 stages of document chaos (you're probably in #2)",
+            "weight": 33
+          },
+          {
+            "id": "B",
+            "subject": "Where does your team waste the most time? ⏰",
+            "weight": 33
+          },
+          {
+            "id": "C",
+            "subject": "Quick question: Where are your files right now",
+            "weight": 34
+          }
+        ]
+      },
+      "width": 250,
+      "height": 166,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -96.58906678394561,
+        "y": -258.4838941369411
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_1",
+      "type": "survey",
+      "position": {
+        "x": -111.16461858475259,
+        "y": -64.48559489451735
+      },
+      "data": {
+        "label": "Document Chaos Stages",
+        "content": "",
+        "description": "",
+        "questions": [
+          {
+            "id": "q_1",
+            "text": "Where do your critical documents primarily live today?",
+            "questionType": "radio",
+            "responseOptions": [
+              {
+                "id": "q_1_opt_1",
+                "text": "Scattered across email attachments",
+                "points": 0
+              },
+              {
+                "id": "q_1_opt_2",
+                "text": "Multiple shared drives or servers",
+                "points": 0
+              },
+              {
+                "id": "q_1_opt_1760468398878",
+                "text": "Central system but still lots of manual work",
+                "points": 0
+              },
+              {
+                "id": "q_1_opt_1760468400788",
+                "text": "Automated system with workflows",
+                "points": 0
+              },
+              {
+                "id": "q_1_opt_1760468403544",
+                "text": "Honestly, I'm not sure",
+                "points": 0
+              }
+            ]
+          }
+        ],
+        "responsePaths": [
+          {
+            "id": "path_1",
+            "label": "Path 1",
+            "mappedOptions": [
+              "q_1_opt_1"
+            ],
+            "color": "#10b981",
+            "scoreMin": null,
+            "scoreMax": null,
+            "advancedRules": {
+              "enabled": false,
+              "requireAll": [],
+              "requireAny": [],
+              "requireNone": []
+            }
+          },
+          {
+            "id": "path_2",
+            "label": "Path 2",
+            "mappedOptions": [
+              "q_1_opt_2"
+            ],
+            "color": "#3b82f6",
+            "scoreMin": null,
+            "scoreMax": null,
+            "advancedRules": {
+              "enabled": false,
+              "requireAll": [],
+              "requireAny": [],
+              "requireNone": []
+            }
+          },
+          {
+            "id": "path_1760468505582",
+            "label": "Path 3",
+            "mappedOptions": [
+              "q_1_opt_1760468398878"
+            ],
+            "color": "#f59e0b"
+          },
+          {
+            "id": "path_1760468505814",
+            "label": "Path 4",
+            "mappedOptions": [
+              "q_1_opt_1760468400788"
+            ],
+            "color": "#ef4444"
+          },
+          {
+            "id": "path_1760468506048",
+            "label": "Path 5",
+            "mappedOptions": [
+              "q_1_opt_1760468403544"
+            ],
+            "color": "#8b5cf6"
+          }
+        ]
+      },
+      "width": 280,
+      "height": 288,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -111.16461858475259,
+        "y": -64.48559489451735
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_2",
+      "type": "email",
+      "position": {
+        "x": -359.83006032282174,
+        "y": 310.52336093611916
+      },
+      "data": {
+        "label": "Email 1B-B: Results - Shared Drives (Stage 2: Siloed)",
+        "content": "",
+        "description": "**Campaign Position:** Immediate response to Survey 1 answer \"Shared online drives\"\n\n**Send Timing:** Immediately after Survey 1 completion\n\n**Goal:** Deliver personalized value, validate stage diagnosis, tease next step",
+        "subject": "Your document assessment results are here",
+        "emailContent": "<p>Hi [First Name],</p><p>Thanks for completing Step 1. Your answer reveals you're in <strong>Stage 2: Siloed</strong>.</p><p><strong>What this means:</strong></p><p>Multiple shared drives represent progress from pure chaos—but they create new problems:</p><ul><li>Each department has its own filing logic</li><li>Cross-functional work requires multiple searches</li><li>Duplicate files across different locations</li><li>No consistent security or permissions</li></ul><p><strong>The typical pattern:</strong></p><p>You've graduated beyond email chaos. Someone (probably IT) set up shared drives to organize things. Each team customized their approach. Now you have structure... but no interoperability.</p><p><strong>What you're exposed to:</strong></p><ul><li>Duplicate files scattered across different folders</li><li>No consistent naming (which \"Final_v2_REAL\" is actually final?)</li><li>Permission chaos (who can see what?)</li><li>Searching returns 47 results and you have to open each one</li></ul><p><strong>Quick wins you can implement today:</strong></p><ol><li><strong>Map your silos</strong> - List every place documents live. You might be surprised</li><li><strong>Identify overlap documents</strong> - Which files need cross-department access?</li><li><strong>Standardize folder structures</strong> - At least align naming across silos</li></ol><p>These reduce friction but don't solve the fundamental problem: information trapped in departmental islands.</p><p><strong>Your next step:</strong></p><p>Now that you know WHERE your documents are, the next question is: How much is this costing you?</p><p>The Siloed stage typically costs more than the Scattered stage because it creates a false sense of security while hiding expensive inefficiencies.</p><p>In 3 days, I'll send you Step 2 - a 15-second question that helps calculate your hidden costs.</p><p>Allie</p><p>P.S. - Stage 2 is where most companies get stuck. They've improved enough that it's no longer a crisis, but not enough to stop the continuous drain on productivity.</p>",
+        "subjectVariants": [
+          {
+            "id": "A",
+            "subject": "Your document assessment results are here",
+            "weight": 33
+          },
+          {
+            "id": "B",
+            "subject": "[First Name], here's what your answer reveals",
+            "weight": 33
+          },
+          {
+            "id": "C",
+            "subject": "You're in Stage 2 (Siloed) - here's what that means",
+            "weight": 34
+          }
+        ],
+        "notes": "**Stage Diagnosis:** Stage 2 (Siloed)\n\n**Primary Pain Points:**\n\n- Departmental information silos\n- Inconsistent naming/structure\n- Permission complexity\n- Search result overload\n\n**Quick Wins Provided:**\n\n1. Silo mapping exercise\n2. Cross-department file identification\n3. Folder structure standardization\n\n**Transition to Next Step:**\n\n- Emphasizes Siloed stage is more expensive than it appears\n- 3-day wait before next email\n- Sets up cost revelation\n\n**Tags Applied:**\n\n- `PathA_Survey1_Complete`\n- `PathA_S1_Cloud`\n- `Stage2_Siloed`"
+      },
+      "width": 250,
+      "height": 226,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -359.83006032282174,
+        "y": 310.52336093611916
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_3",
+      "type": "email",
+      "position": {
+        "x": -619.8129872056694,
+        "y": 310.89037914763253
+      },
+      "data": {
+        "label": "Email 1B-A: Results - Email Inboxes (Stage 1: Scattered)",
+        "content": "",
+        "description": "**Campaign Position:** Immediate response to Survey 1 answer \"Email inboxes\"\n\n**Send Timing:** Immediately after Survey 1 completion\n\n**Goal:** Deliver personalized value, validate stage diagnosis, tease next step",
+        "subject": "Your document assessment results are here",
+        "emailContent": "<p>Hi [First Name],</p><p>Thanks for completing Step 1 of your health check. Your answer reveals you're in <strong>Stage 1: Scattered</strong>.</p><p><strong>What this means:</strong></p><p>When documents live primarily in email attachments, you're dealing with:</p><ul><li>Multiple versions of the same file</li><li>No central source of truth</li><li>Time wasted searching inboxes</li><li>Information locked in individual accounts</li></ul><p><strong>The typical pattern:</strong></p><p>Most companies in Stage 1 started small. Email worked fine for 5-10 people. But as you grew, email became a black hole for critical information.</p><p><strong>What you're exposed to:</strong></p><ul><li>Lost attachments (buried under hundreds of emails)</li><li>Version confusion (which draft is current?)</li><li>Single points of failure (files disappear when people leave)</li><li>Zero security controls (anyone can forward anything)</li></ul><p><strong>Quick win you can implement today:</strong></p><p>Set up email rules that automatically move specific attachments to a designated folder. It won't solve everything, but it'll stop the bleeding on your most common file types.</p><p><strong>Your next step:</strong></p><p>Now that you know WHERE your documents are, the next question is: How much is this costing you?</p><p>Most executives drastically underestimate the real cost of scattered documents. Not just the direct time, but the shadow costs that multiply the impact.</p><p>In 3 days, I'll send you Step 2 - a 15-second question that helps calculate your hidden costs.</p><p>Allie</p><p>P.S. - Your Stage 1 diagnosis isn't permanent. Companies move through these stages—but only with intentional planning. That's what this health check helps you build.</p>",
+        "subjectVariants": [
+          {
+            "id": "A",
+            "subject": "Your document assessment results are here",
+            "weight": 33
+          },
+          {
+            "id": "B",
+            "subject": "[First Name], here's what your answer reveals",
+            "weight": 33
+          },
+          {
+            "id": "C",
+            "subject": "You're in Stage 1 (Scattered) - here's what that means",
+            "weight": 34
+          }
+        ],
+        "notes": "## Key Elements\n\n**Stage Diagnosis:** Stage 1 (Scattered)\n\n**Primary Pain Points:**\n\n- Lost/buried email attachments\n- Version control chaos\n- Single points of failure\n- No access control\n\n**Quick Win Provided:**\n\nEmail filing rules for automatic attachment organization\n\n**Transition to Next Step:**\n\n- Sets up cost calculation in Step 2\n- 3-day wait before next email\n- Emphasizes shadow costs beyond direct time\n\n**Tags Applied:**\n\n- `PathA_Survey1_Complete`\n- `PathA_S1_Email`\n- `Stage1_Scattered`"
+      },
+      "width": 250,
+      "height": 226,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -619.8129872056694,
+        "y": 310.89037914763253
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_4",
+      "type": "email",
+      "position": {
+        "x": 168.7193632012153,
+        "y": 309.7416807926355
+      },
+      "data": {
+        "label": "Email 1B-D: Results - Local Computers/Servers (Stage 1)",
+        "content": "",
+        "description": "**Campaign Position:** Immediate response to Survey 1 answer \"Local computers/servers\"\n\n**Send Timing:** Immediately after Survey 1 completion\n\n**Goal:** Deliver personalized value, validate stage diagnosis, tease next step",
+        "subject": "Your document assessment results are here",
+        "emailContent": "<p>Hi [First Name],</p><p>Thanks for taking Step 1. Here's what your answer tells us:</p><p><strong>You said:</strong> Local computers and servers waste the most time</p><p><strong>That means:</strong> You're in <strong>Stage 1 (Scattered)</strong></p><p>Here's the pattern we see:</p><p>Files live on individual hard drives. \"Can you send me that file?\" becomes your team's most common question. When someone's laptop dies or an employee leaves? Those files are gone forever.</p><p><strong>What you're exposed to:</strong></p><ul><li>Single points of failure (no backup = no safety net)</li><li>Zero version control (everyone has their own copy)</li><li>Permission impossibility (can't control what you can't see)</li><li>Collaboration nightmare (email chains with 14 attachments)</li></ul><p><strong>Quick win you can implement today:</strong></p><p>Mandate a centralized repository for shared files. Even a basic shared drive is better than scattered desktops. Start with project files and client documents—the ones multiple people need.</p><p><strong>Your next step:</strong></p><p>Now that you know WHERE your documents are, the next question is: How much is this costing you?</p><p>And trust us—the cost of a hard drive failure is just the beginning.</p><p>In 3 days, I'll send you Step 2 - a 15-second question that helps calculate your hidden costs.</p><p>Allie</p><p>P.S. - The \"it's on my computer\" problem isn't just about lost files. It's about knowledge bottlenecks, delayed decisions, and team members who can't help each other because they can't access the information they need.</p>",
+        "subjectVariants": [
+          {
+            "id": "A",
+            "subject": "Your document assessment results are here",
+            "weight": 33
+          },
+          {
+            "id": "B",
+            "subject": "[First Name], here's what your answer reveals",
+            "weight": 33
+          },
+          {
+            "id": "C",
+            "subject": "You're in Stage 1 (Scattered) - here's what that means",
+            "weight": 34
+          }
+        ],
+        "notes": "**Stage:** Stage 1 (Scattered)\n\n**Tags:** `PathA_Survey1_Complete`, `PathA_S1_Local`, `Stage1_Scattered`\n\n**Quick Win:** Centralized repository setup\n\n**Next:** Email 2 (Day 4)"
+      },
+      "width": 250,
+      "height": 226,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 168.7193632012153,
+        "y": 309.7416807926355
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_5",
+      "type": "email",
+      "position": {
+        "x": -95.3718394550466,
+        "y": 309.37466258112215
+      },
+      "data": {
+        "label": "Email 1B-C: Results - Physical File Cabinets (Stage 1-2)",
+        "content": "",
+        "description": "**Campaign Position:** Immediate response to Survey 1 answer \"Physical file cabinets\"\n\n**Send Timing:** Immediately after Survey 1 completion\n\n**Goal:** Deliver personalized value, validate stage diagnosis, tease next step",
+        "subject": "Your document assessment results are here",
+        "emailContent": "<p>Hi [First Name],</p><p>Thanks for taking Step 1. Here's what your answer tells us:</p><p><strong>You said:</strong> Physical file cabinets waste the most time</p><p><strong>That means:</strong> You're in <strong>Stage 1-2 (Legacy to Siloed)</strong></p><p>Here's the pattern we see:</p><p>You're still dealing with paper in a digital world. Someone has to physically walk to the file room, flip through folders, pull documents. Meanwhile, the person who needs it sits at their desk waiting.</p><p><strong>What you're exposed to:</strong></p><ul><li>Physical space costs (rent for storage rooms)</li><li>Lost files (misfiled, misplaced, or walked away)</li><li>Disaster risk (fire, flood, or just spilled coffee)</li><li>Zero remote access (work from home? Good luck.)</li></ul><p><strong>Quick win you can implement today:</strong></p><p>Prioritize. Don't scan everything. Start with your most-requested documents—the ones people ask for weekly. Digitize those first. You'll get immediate time savings.</p><p><strong>Your next step:</strong></p><p>Now that you know WHERE your documents are, the next question is: How much is this costing you?</p><p>Spoiler: It's more than the square footage.</p><p>In 3 days, I'll send you Step 2 - a 15-second question that helps calculate your hidden costs.</p><p>Allie</p><p>P.S. - Physical storage seems like a sunk cost, but the real expense is in access time, disaster risk, and the inability to work remotely. Those costs add up fast.</p>",
+        "subjectVariants": [
+          {
+            "id": "A",
+            "subject": "Your document assessment results are here",
+            "weight": 33
+          },
+          {
+            "id": "B",
+            "subject": "[First Name], here's what your answer reveals",
+            "weight": 33
+          },
+          {
+            "id": "C",
+            "subject": "You're in Stage 1-2 (Legacy) - here's what that means",
+            "weight": 34
+          }
+        ],
+        "notes": "**Stage:** Stage 1-2 (Legacy)\n\n**Tags:** `PathA_Survey1_Complete`, `PathA_S1_Physical`, `Stage1-2_Legacy`\n\n**Quick Win:** Prioritized scanning strategy\n\n**Next:** Email 2 (Day 4)"
+      },
+      "width": 250,
+      "height": 226,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -95.3718394550466,
+        "y": 309.37466258112215
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_6",
+      "type": "email",
+      "position": {
+        "x": 431.66186750248005,
+        "y": 308.2259642261252
+      },
+      "data": {
+        "label": "Email Node",
+        "content": "",
+        "description": "",
+        "subject": "",
+        "emailContent": "<p><br></p>",
+        "subjectVariants": [
+          {
+            "id": "A",
+            "subject": "",
+            "weight": 33
+          },
+          {
+            "id": "B",
+            "subject": "",
+            "weight": 33
+          },
+          {
+            "id": "C",
+            "subject": "",
+            "weight": 34
+          }
+        ]
+      },
+      "width": 200,
+      "height": 130,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 431.66186750248005,
+        "y": 308.2259642261252
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_7",
+      "type": "email",
+      "position": {
+        "x": -69.6046578243699,
+        "y": 645.3334324858076
+      },
+      "data": {
+        "label": "Email Node",
+        "content": "",
+        "description": "",
+        "subject": "",
+        "emailContent": ""
+      },
+      "width": 200,
+      "height": 88,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -69.6046578243699,
+        "y": 645.3334324858076
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_8",
+      "type": "survey",
+      "position": {
+        "x": -109.05317797755413,
+        "y": 800.0272143939666
+      },
+      "data": {
+        "label": "Survey Node",
+        "content": "",
+        "description": "",
+        "questions": [
+          {
+            "id": "q_1",
+            "text": "How many invoice documents do you process each month",
+            "questionType": "range",
+            "responseOptions": [
+              {
+                "id": "q_1_opt_1",
+                "text": "Option 1",
+                "points": 0
+              },
+              {
+                "id": "q_1_opt_2",
+                "text": "Option 2",
+                "points": 0
+              }
+            ]
+          }
+        ],
+        "responsePaths": [
+          {
+            "id": "path_1",
+            "label": "Path 1",
+            "mappedOptions": [
+              "q_1_opt_1"
+            ],
+            "color": "#10b981",
+            "scoreMin": null,
+            "scoreMax": null,
+            "advancedRules": {
+              "enabled": false,
+              "requireAll": [],
+              "requireAny": [],
+              "requireNone": []
+            },
+            "rangeConditions": [
+              {
+                "id": "range_cond_1760554418822",
+                "questionId": "q_1",
+                "operator": "lte",
+                "minValue": null,
+                "maxValue": null,
+                "value": 100
+              }
+            ]
+          },
+          {
+            "id": "path_2",
+            "label": "Path 2",
+            "mappedOptions": [
+              "q_1_opt_2"
+            ],
+            "color": "#3b82f6",
+            "scoreMin": null,
+            "scoreMax": null,
+            "advancedRules": {
+              "enabled": false,
+              "requireAll": [],
+              "requireAny": [],
+              "requireNone": []
+            },
+            "rangeConditions": [
+              {
+                "id": "range_cond_1760554438034",
+                "questionId": "q_1",
+                "operator": "between",
+                "minValue": 101,
+                "maxValue": 500,
+                "value": null
+              }
+            ]
+          },
+          {
+            "id": "path_1760554384279",
+            "label": "Path 3",
+            "mappedOptions": [],
+            "color": "#f59e0b",
+            "scoreMin": null,
+            "scoreMax": null,
+            "rangeConditions": [
+              {
+                "id": "range_cond_1760554451850",
+                "questionId": "q_1",
+                "operator": "gte",
+                "minValue": null,
+                "maxValue": null,
+                "value": 501
+              }
+            ],
+            "advancedRules": {
+              "enabled": false,
+              "requireAll": [],
+              "requireAny": [],
+              "requireNone": []
+            }
+          }
+        ]
+      },
+      "width": 280,
+      "height": 232,
+      "selected": true,
+      "positionAbsolute": {
+        "x": -109.05317797755413,
+        "y": 800.0272143939666
+      },
+      "dragging": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "node_1",
+      "sourceHandle": "path_1760468505582",
+      "target": "node_5",
+      "targetHandle": null,
+      "label": "Path 3",
+      "style": {
+        "stroke": "#f59e0b"
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "id": "reactflow__edge-node_1path_1760468505582-node_5"
+    },
+    {
+      "source": "node_0",
+      "sourceHandle": null,
+      "target": "node_1",
+      "targetHandle": null,
+      "label": "",
+      "style": {},
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "id": "reactflow__edge-node_0-node_1"
+    },
+    {
+      "source": "node_1",
+      "sourceHandle": "path_1",
+      "target": "node_3",
+      "targetHandle": null,
+      "label": "Path 1",
+      "style": {
+        "stroke": "#10b981"
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "id": "reactflow__edge-node_1path_1-node_3"
+    },
+    {
+      "source": "node_1",
+      "sourceHandle": "path_2",
+      "target": "node_2",
+      "targetHandle": null,
+      "label": "Path 2",
+      "style": {
+        "stroke": "#3b82f6"
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "id": "reactflow__edge-node_1path_2-node_2"
+    },
+    {
+      "source": "node_1",
+      "sourceHandle": "path_1760468505814",
+      "target": "node_4",
+      "targetHandle": null,
+      "label": "Path 4",
+      "style": {
+        "stroke": "#ef4444"
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "id": "reactflow__edge-node_1path_1760468505814-node_4"
+    },
+    {
+      "source": "node_1",
+      "sourceHandle": "path_1760468506048",
+      "target": "node_6",
+      "targetHandle": null,
+      "label": "Path 5",
+      "style": {
+        "stroke": "#8b5cf6"
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "id": "reactflow__edge-node_1path_1760468506048-node_6"
+    },
+    {
+      "source": "node_3",
+      "sourceHandle": null,
+      "target": "node_7",
+      "targetHandle": null,
+      "label": "",
+      "style": {},
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "id": "reactflow__edge-node_3-node_7"
+    },
+    {
+      "source": "node_2",
+      "sourceHandle": null,
+      "target": "node_7",
+      "targetHandle": null,
+      "label": "",
+      "style": {},
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "id": "reactflow__edge-node_2-node_7"
+    },
+    {
+      "source": "node_5",
+      "sourceHandle": null,
+      "target": "node_7",
+      "targetHandle": null,
+      "label": "",
+      "style": {},
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "id": "reactflow__edge-node_5-node_7"
+    },
+    {
+      "source": "node_4",
+      "sourceHandle": null,
+      "target": "node_7",
+      "targetHandle": null,
+      "label": "",
+      "style": {},
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "id": "reactflow__edge-node_4-node_7"
+    },
+    {
+      "source": "node_6",
+      "sourceHandle": null,
+      "target": "node_7",
+      "targetHandle": null,
+      "label": "",
+      "style": {},
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "id": "reactflow__edge-node_6-node_7"
+    },
+    {
+      "source": "node_7",
+      "sourceHandle": null,
+      "target": "node_8",
+      "targetHandle": null,
+      "label": "",
+      "animated": false,
+      "style": {
+        "stroke": "#b1b1b7",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#b1b1b7"
+      },
+      "id": "reactflow__edge-node_7-node_8"
+    }
+  ],
+  "exportDate": "2025-10-15T19:07:21.178Z",
+  "metadata": {
+    "nodeCount": 9,
+    "edgeCount": 12,
+    "nodeTypes": [
+      "email",
+      "survey"
+    ]
+  }
+}

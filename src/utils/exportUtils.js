@@ -4,23 +4,49 @@ import JSZip from 'jszip'
 // Browser can't run mjml2html directly
 
 // Export entire campaign as JSON
-export const exportCampaignJSON = (nodes, edges, campaignName = 'campaign') => {
-  const flowData = {
-    version: '1.0',
-    name: campaignName,
-    nodes,
-    edges,
-    exportDate: new Date().toISOString(),
-    metadata: {
-      nodeCount: nodes.length,
-      edgeCount: edges.length,
-      nodeTypes: [...new Set(nodes.map(n => n.type))]
+export const exportCampaignJSON = (flowDataOrNodes, edgesOrCampaignName, campaignNameLegacy) => {
+  // Handle both old and new signatures
+  let flowData, campaignName
+
+  if (typeof flowDataOrNodes === 'object' && flowDataOrNodes.campaignName) {
+    // New signature: exportCampaignJSON({ campaignName, nodes, edges }, campaignName)
+    flowData = {
+      version: '1.0',
+      campaignName: flowDataOrNodes.campaignName,
+      nodes: flowDataOrNodes.nodes,
+      edges: flowDataOrNodes.edges,
+      exportDate: new Date().toISOString(),
+      metadata: {
+        nodeCount: flowDataOrNodes.nodes.length,
+        edgeCount: flowDataOrNodes.edges.length,
+        nodeTypes: [...new Set(flowDataOrNodes.nodes.map(n => n.type))]
+      }
+    }
+    campaignName = edgesOrCampaignName || flowDataOrNodes.campaignName || 'campaign'
+  } else {
+    // Old signature: exportCampaignJSON(nodes, edges, campaignName)
+    const nodes = flowDataOrNodes
+    const edges = edgesOrCampaignName
+    campaignName = campaignNameLegacy || 'campaign'
+
+    flowData = {
+      version: '1.0',
+      campaignName: campaignName,
+      nodes,
+      edges,
+      exportDate: new Date().toISOString(),
+      metadata: {
+        nodeCount: nodes.length,
+        edgeCount: edges.length,
+        nodeTypes: [...new Set(nodes.map(n => n.type))]
+      }
     }
   }
 
   const dataStr = JSON.stringify(flowData, null, 2)
   const dataBlob = new Blob([dataStr], { type: 'application/json' })
-  saveAs(dataBlob, `${campaignName}-${Date.now()}.json`)
+  const fileName = sanitizeFileName(campaignName)
+  saveAs(dataBlob, `${fileName}-${Date.now()}.json`)
 }
 
 // Export selected nodes as JSON

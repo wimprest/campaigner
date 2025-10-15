@@ -61,6 +61,7 @@ function FlowBuilder() {
   const [reactFlowInstance, setReactFlowInstance] = useState(null)
   const [selectedNode, setSelectedNode] = useState(null)
   const [selectedEdge, setSelectedEdge] = useState(null)
+  const [campaignName, setCampaignName] = useState('Untitled Campaign')
 
   // History for undo/redo
   const [history, setHistory] = useState([{ nodes: [], edges: [] }])
@@ -143,7 +144,12 @@ function FlowBuilder() {
     switch (type) {
       case 'email':
         return {
-          subject: '',
+          subject: '', // Legacy single subject (for backward compatibility)
+          subjectVariants: [
+            { id: 'A', subject: '', weight: 33 },
+            { id: 'B', subject: '', weight: 33 },
+            { id: 'C', subject: '', weight: 34 }
+          ],
           emailContent: '',
         }
       case 'survey':
@@ -167,6 +173,7 @@ function FlowBuilder() {
               color: '#10b981',
               scoreMin: null,
               scoreMax: null,
+              rangeConditions: [],  // Numeric range routing for range-type questions
               advancedRules: {
                 enabled: false,
                 requireAll: [],   // AND logic - all must be selected
@@ -181,6 +188,7 @@ function FlowBuilder() {
               color: '#3b82f6',
               scoreMin: null,
               scoreMax: null,
+              rangeConditions: [],  // Numeric range routing for range-type questions
               advancedRules: {
                 enabled: false,
                 requireAll: [],
@@ -249,17 +257,19 @@ function FlowBuilder() {
 
   const saveToLocalStorage = useCallback(() => {
     const flowData = {
+      campaignName,
       nodes,
       edges,
     }
     localStorage.setItem('campaign-flow', JSON.stringify(flowData))
     alert('Campaign saved successfully!')
-  }, [nodes, edges])
+  }, [campaignName, nodes, edges])
 
   const loadFromLocalStorage = useCallback(() => {
     const savedFlow = localStorage.getItem('campaign-flow')
     if (savedFlow) {
       const flowData = JSON.parse(savedFlow)
+      setCampaignName(flowData.campaignName || 'Untitled Campaign')
       setNodes(flowData.nodes || [])
       setEdges(flowData.edges || [])
       updateIdCounter(flowData.nodes || [])
@@ -270,16 +280,16 @@ function FlowBuilder() {
   }, [setNodes, setEdges])
 
   const handleExportJSON = useCallback(() => {
-    exportCampaignJSON(nodes, edges, 'campaign')
-  }, [nodes, edges])
+    exportCampaignJSON({ campaignName, nodes, edges }, campaignName)
+  }, [campaignName, nodes, edges])
 
   const handleExportEmails = useCallback(() => {
-    exportAllEmailsAsZip(nodes, 'campaign')
-  }, [nodes])
+    exportAllEmailsAsZip(nodes, campaignName)
+  }, [campaignName, nodes])
 
   const handleExportHTML = useCallback(() => {
-    exportAsInteractiveHTML(nodes, edges, 'campaign')
-  }, [nodes, edges])
+    exportAsInteractiveHTML(nodes, edges, campaignName)
+  }, [campaignName, nodes, edges])
 
   const handleImportJSON = useCallback((file) => {
     if (!file) return
@@ -290,6 +300,7 @@ function FlowBuilder() {
         const importedData = JSON.parse(e.target.result)
 
         if (importedData.nodes && importedData.edges) {
+          setCampaignName(importedData.campaignName || 'Imported Campaign')
           setNodes(importedData.nodes)
           setEdges(importedData.edges)
           updateIdCounter(importedData.nodes)
@@ -431,6 +442,8 @@ function FlowBuilder() {
   return (
     <div className="h-screen flex flex-col">
       <TopBar
+        campaignName={campaignName}
+        onCampaignNameChange={setCampaignName}
         onSave={saveToLocalStorage}
         onLoad={loadFromLocalStorage}
         onImport={handleImportJSON}

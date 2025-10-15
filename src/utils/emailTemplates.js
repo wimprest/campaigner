@@ -1,6 +1,7 @@
 // MJML Email Templates Library
 
-export const emailTemplates = {
+// Default templates (cannot be deleted, only customized)
+export const defaultEmailTemplates = {
   blank: {
     name: 'Blank',
     description: 'Start from scratch',
@@ -240,13 +241,83 @@ export const emailTemplates = {
   }
 }
 
+// LocalStorage key for custom templates
+const CUSTOM_TEMPLATES_KEY = 'campaign-custom-email-templates'
+
+// Get custom templates from localStorage
+export const getCustomTemplates = () => {
+  try {
+    const stored = localStorage.getItem(CUSTOM_TEMPLATES_KEY)
+    return stored ? JSON.parse(stored) : {}
+  } catch (error) {
+    console.error('Error loading custom templates:', error)
+    return {}
+  }
+}
+
+// Save custom templates to localStorage
+export const saveCustomTemplates = (templates) => {
+  try {
+    localStorage.setItem(CUSTOM_TEMPLATES_KEY, JSON.stringify(templates))
+    return true
+  } catch (error) {
+    console.error('Error saving custom templates:', error)
+    return false
+  }
+}
+
+// Get all templates (default + custom, custom overrides default)
+export const getAllTemplates = () => {
+  const custom = getCustomTemplates()
+  return { ...defaultEmailTemplates, ...custom }
+}
+
+// Backwards compatibility
+export const emailTemplates = getAllTemplates()
+
+// Add a new custom template
+export const addCustomTemplate = (key, template) => {
+  const custom = getCustomTemplates()
+  custom[key] = template
+  return saveCustomTemplates(custom)
+}
+
+// Update an existing template (saves as custom template)
+export const updateTemplate = (key, template) => {
+  return addCustomTemplate(key, template)
+}
+
+// Delete a custom template (cannot delete default templates)
+export const deleteCustomTemplate = (key) => {
+  if (defaultEmailTemplates[key]) {
+    console.warn('Cannot delete default template:', key)
+    return false
+  }
+  const custom = getCustomTemplates()
+  delete custom[key]
+  return saveCustomTemplates(custom)
+}
+
+// Check if template is custom (can be deleted)
+export const isCustomTemplate = (key) => {
+  return !defaultEmailTemplates[key] && getCustomTemplates()[key] !== undefined
+}
+
 // Helper function to get template list for dropdown
 export const getTemplateList = () => {
-  return Object.entries(emailTemplates).map(([key, template]) => ({
+  const allTemplates = getAllTemplates()
+  return Object.entries(allTemplates).map(([key, template]) => ({
     value: key,
     label: template.name,
-    description: template.description
+    description: template.description,
+    isCustom: isCustomTemplate(key)
   }))
+}
+
+// Get a single template by key
+export const getTemplate = (key) => {
+  const allTemplates = getAllTemplates()
+  return allTemplates[key] || null
 }
 
 // Helper function to convert MJML to HTML

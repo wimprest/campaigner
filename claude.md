@@ -6,7 +6,7 @@ A visual, drag-and-drop marketing campaign builder built with React and React Fl
 
 **Target Users**: Marketing teams, campaign managers, and automation specialists who need to design complex customer journeys without coding.
 
-**Current Phase**: Phase 2 - Advanced Features (Survey Logic & WYSIWYG Editing)
+**Current Phase**: Phase 2 Complete - Advanced Features (Survey Logic, WYSIWYG Editing, A/B Testing, Range Routing)
 
 ## Tech Stack
 
@@ -68,6 +68,12 @@ campaign/
   - Blank, Welcome, Announcement, Survey, Promotional, Re-engagement
 - **WYSIWYG editor** (ReactQuill) with Visual/Code toggle
 - **Rich text formatting**: Headers, bold, italic, lists, colors, links, images
+- **A/B/C Subject Line Testing** ⭐ NEW
+  - Create 3 subject line variants (A, B, C)
+  - Configure split percentages for each variant (default: 33/33/34%)
+  - Color-coded tabbed interface (blue/green/purple)
+  - Visual badge on nodes showing test status (e.g., "A/B/C Test 2/3")
+  - Industry best practice: 1,500+ recipients per variant
 - **Variable support**: `{{ firstName }}`, `{{ ctaLink }}`
 - **Export formats**: MJML source, HTML (via external converter), metadata JSON
 
@@ -75,10 +81,11 @@ campaign/
 - **Multi-question surveys** with collapsible UI
 - **4 question types**: Radio (single choice), Checkbox (multiple), Text input, Numeric range
 - **Response paths** with dynamic output handles
-- **Conditional routing** with 3 methods:
+- **Conditional routing** with 4 methods:
   1. **Simple mapping**: Map specific options to paths
   2. **Score-based logic**: Assign points to options, route by total score
-  3. **Advanced AND/OR/NOT rules**: Complex multi-option logic
+  3. **Numeric range routing**: Route based on numeric values (≤, ≥, =, between) ⭐ NEW
+  4. **Advanced AND/OR/NOT rules**: Complex multi-option logic
 
 #### Score-Based System
 - Each response option has a `points` value (can be negative)
@@ -86,12 +93,26 @@ campaign/
 - Paths have `scoreMin` and `scoreMax` thresholds
 - Visual indicators: 🎯 badge on nodes with score routing
 
+#### Numeric Range Routing ⭐ NEW
+- For numeric range questions only
+- **4 operators**:
+  - `≤` Less than or equal to (single value)
+  - `≥` Greater than or equal to (single value)
+  - `=` Equal to (single value)
+  - `between` Range with min/max values
+- **Use case example**: Route based on document volume
+  - Path 1: response ≤ 100
+  - Path 2: response between 101-500
+  - Path 3: response ≥ 501
+- Live preview shows formatted conditions (e.g., "✓ 101 - 500 → Path 1")
+- Multiple conditions per path supported
+
 #### Advanced Logic Rules
 - **AND logic**: Require ALL selected options
 - **OR logic**: Require ANY of selected options
 - **NOT logic**: Exclude if certain options selected
 - Visual indicators: 🧠 badge on nodes with advanced rules
-- Priority: Advanced rules > Score routing > Simple mapping
+- Priority: Advanced rules > Numeric range routing > Score routing > Simple mapping
 
 ### 4. Save/Load/Export
 - **Browser localStorage** for persistence
@@ -134,6 +155,16 @@ campaign/
       mappedOptions: ["q_1234567890_opt_1"],
       scoreMin: 8,
       scoreMax: 10,
+      rangeConditions: [  // ⭐ NEW: For numeric range routing
+        {
+          id: "range_cond_1234567890",
+          questionId: "q_1234567890",
+          operator: "between",  // lte | gte | eq | between
+          minValue: 101,
+          maxValue: 500,
+          value: null  // for single-value operators (lte, gte, eq)
+        }
+      ],
       advancedRules: {
         enabled: false,
         requireAll: [],   // AND logic
@@ -149,7 +180,24 @@ campaign/
 ```javascript
 {
   label: "Welcome Email",
-  subject: "Welcome to our platform!",
+  subject: "Welcome to our platform!",  // Legacy single subject (backward compatible)
+  subjectVariants: [  // ⭐ NEW: A/B/C testing
+    {
+      id: "A",
+      subject: "Welcome to our platform!",
+      weight: 33  // Percentage split
+    },
+    {
+      id: "B",
+      subject: "Get started with your new account",
+      weight: 33
+    },
+    {
+      id: "C",
+      subject: "Your account is ready!",
+      weight: 34
+    }
+  ],
   emailTemplate: "welcome",  // Template key
   mjmlTemplate: "<mjml>...</mjml>",  // MJML source code
   emailContent: "<p>Rich text content...</p>",  // HTML from ReactQuill
@@ -170,24 +218,27 @@ campaign/
   - Save/load/import/export functions
 - **Critical function**: `getDefaultDataForType()` - Defines initial data structure for new nodes
 
-### `ContentPanel.jsx` (900+ lines) ⚠️ MOST COMPLEX FILE
+### `ContentPanel.jsx` (1400+ lines) ⚠️ MOST COMPLEX FILE
 - **Purpose**: Right-side editing panel for all node types
 - **Responsibilities**:
   - Render type-specific editors for each node
   - Survey question/option/path management
   - ReactQuill WYSIWYG integration
   - Email template selection
+  - A/B/C subject line testing UI ⭐ NEW
   - Score calculation logic
+  - Numeric range routing UI ⭐ NEW
   - Advanced rules UI (AND/OR/NOT)
 - **Key sections**:
-  - Lines 1-200: State & helper functions
-  - Lines 200-340: Email editor (MJML + ReactQuill)
-  - Lines 340-690: Survey editor (questions, paths, scoring, advanced rules)
-  - Lines 690-780: Other node editors (conditional, delay, action)
+  - Lines 1-220: State & helper functions (including new range condition helpers)
+  - Lines 220-460: Email editor (MJML + ReactQuill + A/B testing)
+  - Lines 460-1040: Survey editor (questions, paths, scoring, range routing, advanced rules)
+  - Lines 1040-1140: Other node editors (conditional, delay, action)
 - **Tips for editing**:
   - Survey logic is highly nested - use collapsible sections
   - Score calculation happens in `calculateScoreRange()` function
   - Path mapping uses checkbox UI with `toggleOptionInPath()` function
+  - Range conditions managed via `addRangeCondition()`, `updateRangeCondition()`, `removeRangeCondition()`
 
 ### `utils/surveyLogic.js` (NEW - Phase 2)
 - **Purpose**: Survey response evaluation engine
@@ -413,12 +464,16 @@ campaign/
 - Preview with sample data
 - Export variable mapping for ESP integration
 
-#### 3. A/B Testing Setup
-**Features**:
-- Create email variants (A/B/C)
-- Define split percentages
-- Visual indicator of variants in flow
-- Export test configuration
+#### 3. Enhance A/B Testing ✅ PARTIAL (Subject lines complete, body variants pending)
+**Completed**:
+- ✅ Subject line variants (A/B/C) with split percentages
+- ✅ Color-coded tabbed interface
+- ✅ Visual badges on nodes
+
+**Future enhancements**:
+- Create email body variants (not just subjects)
+- Preview mode showing all variants side-by-side
+- Winner selection and auto-rollout logic
 
 ### Phase 7: Integration Capabilities
 
@@ -608,7 +663,7 @@ To add debug logging (optional future feature):
 ## Version History
 
 - **v0.1** (Phase 1): Basic flowchart, 5 node types, save/load, simple surveys
-- **v0.2** (Phase 2): Multi-question surveys, score-based routing, advanced AND/OR/NOT logic, WYSIWYG email editor
+- **v0.2** (Phase 2): Multi-question surveys, score-based routing, advanced AND/OR/NOT logic, WYSIWYG email editor, A/B/C subject line testing, numeric range routing
 - **v0.3** (Planned): Survey testing, validation warnings, UX polish
 
 ---
@@ -648,6 +703,6 @@ npm run dev
 
 ---
 
-**Last Updated**: 2025-10-14 (Phase 2 Complete)
+**Last Updated**: 2025-10-15 (Phase 2 Complete - A/B Testing & Range Routing Added)
 **Maintainer**: Campaign Builder Team
 **Status**: Active Development

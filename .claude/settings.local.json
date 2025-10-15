@@ -7,7 +7,14 @@
       "Bash(find:*)",
       "Bash(taskkill:*)",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nInitial commit: Campaign Flowchart Builder - Phase 2 complete\n\nFull-featured campaign flowchart builder with:\n- Multi-question surveys with unlimited questions\n- Score-based routing with thresholds\n- Advanced AND/OR/NOT logic for complex rules\n- WYSIWYG email editor with ReactQuill\n- MJML email templates\n- Undo/Redo functionality (Ctrl+Z/Ctrl+Y)\n- Delete nodes and edges (Delete key or buttons)\n- Import/Export (JSON, HTML, Email ZIP)\n- Node types: Survey, Email, Conditional, Delay, Action\n- Visual flowchart with ReactFlow\n- LocalStorage persistence\n\n🤖 Generated with Claude Code\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(test:*)"
     ],
     "deny": [],
     "ask": []

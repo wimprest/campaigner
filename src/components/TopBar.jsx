@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react'
 import { Save, Upload, Download, Trash2, ChevronDown, FileJson, Mail, Globe, FolderOpen } from 'lucide-react'
 
 export default function TopBar({
+  campaignName,
+  onCampaignNameChange,
   onSave,
   onLoad,
   onImport,
@@ -13,15 +15,61 @@ export default function TopBar({
 }) {
   const [showExportMenu, setShowExportMenu] = useState(false)
   const [showLoadMenu, setShowLoadMenu] = useState(false)
+  const [isEditingName, setIsEditingName] = useState(false)
   const fileInputRef = useRef(null)
+  const nameInputRef = useRef(null)
+
+  const handleNameEdit = () => {
+    setIsEditingName(true)
+    setTimeout(() => nameInputRef.current?.select(), 0)
+  }
+
+  const handleNameBlur = () => {
+    setIsEditingName(false)
+    if (!campaignName.trim()) {
+      onCampaignNameChange('Untitled Campaign')
+    }
+  }
+
+  const handleNameKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      nameInputRef.current?.blur()
+    } else if (e.key === 'Escape') {
+      nameInputRef.current?.blur()
+    }
+  }
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
-      <div className="flex items-center">
-        <h1 className="text-xl font-bold text-gray-900">Campaign Flowchart Builder</h1>
-        <span className="ml-3 px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
-          Phase 2
-        </span>
+      <div className="flex items-center space-x-4">
+        <div className="flex items-center">
+          <h1 className="text-xl font-bold text-gray-900">Campaign Flowchart Builder</h1>
+          <span className="ml-3 px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+            Phase 2
+          </span>
+        </div>
+        <div className="flex items-center">
+          <span className="text-gray-500 mr-2">|</span>
+          {isEditingName ? (
+            <input
+              ref={nameInputRef}
+              type="text"
+              value={campaignName}
+              onChange={(e) => onCampaignNameChange(e.target.value)}
+              onBlur={handleNameBlur}
+              onKeyDown={handleNameKeyDown}
+              className="px-2 py-1 border border-blue-500 rounded text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style={{ width: `${Math.max(campaignName.length * 8 + 20, 150)}px` }}
+            />
+          ) : (
+            <button
+              onClick={handleNameEdit}
+              className="px-2 py-1 text-sm font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+            >
+              {campaignName}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center space-x-2">

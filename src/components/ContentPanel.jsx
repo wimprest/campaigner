@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react'
-import { X, Plus, Trash, Mail, ChevronDown, ChevronUp } from 'lucide-react'
+import { X, Plus, Trash, Mail, ChevronDown, ChevronUp, Maximize2 } from 'lucide-react'
 import { emailTemplates, getTemplateList } from '../utils/emailTemplates'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
+import EmailEditorModal from './EmailEditorModal'
 
 export default function ContentPanel({ node, onUpdate, onClose, onDelete }) {
   const [localData, setLocalData] = useState(node.data)
   const [expandedQuestions, setExpandedQuestions] = useState(new Set())
   const [emailEditMode, setEmailEditMode] = useState('visual')
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
+  const [activeSubjectVariant, setActiveSubjectVariant] = useState('A')
 
   useEffect(() => {
     setLocalData(node.data)
@@ -22,6 +25,11 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete }) {
     if (window.confirm('Are you sure you want to delete this node?')) {
       onDelete(node.id)
     }
+  }
+
+  const handleEmailModalSave = (updatedData) => {
+    setLocalData(updatedData)
+    setIsEmailModalOpen(false)
   }
 
   const handleChange = (field, value) => {
@@ -140,7 +148,16 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete }) {
       id: `path_${Date.now()}`,
       label: `Path ${(localData.responsePaths?.length || 0) + 1}`,
       mappedOptions: [],
-      color: colors[(localData.responsePaths?.length || 0) % colors.length]
+      color: colors[(localData.responsePaths?.length || 0) % colors.length],
+      scoreMin: null,
+      scoreMax: null,
+      rangeConditions: [],
+      advancedRules: {
+        enabled: false,
+        requireAll: [],
+        requireAny: [],
+        requireNone: []
+      }
     }
     const newPaths = [...(localData.responsePaths || []), newPath]
     handleChange('responsePaths', newPaths)
@@ -201,6 +218,89 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete }) {
     }
   }
 
+  // Subject variant management
+  const ensureSubjectVariants = () => {
+    // Initialize variants if they don't exist (backward compatibility)
+    if (!localData.subjectVariants || localData.subjectVariants.length === 0) {
+      return [
+        { id: 'A', subject: localData.subject || '', weight: 33 },
+        { id: 'B', subject: '', weight: 33 },
+        { id: 'C', subject: '', weight: 34 }
+      ]
+    }
+    return localData.subjectVariants
+  }
+
+  const updateSubjectVariant = (variantId, newSubject) => {
+    const variants = ensureSubjectVariants()
+    const updatedVariants = variants.map(v =>
+      v.id === variantId ? { ...v, subject: newSubject } : v
+    )
+    handleChange('subjectVariants', updatedVariants)
+    // Also update legacy subject field with variant A for backward compatibility
+    if (variantId === 'A') {
+      handleChange('subject', newSubject)
+    }
+  }
+
+  const updateVariantWeight = (variantId, newWeight) => {
+    const variants = ensureSubjectVariants()
+    const updatedVariants = variants.map(v =>
+      v.id === variantId ? { ...v, weight: parseInt(newWeight) || 0 } : v
+    )
+    handleChange('subjectVariants', updatedVariants)
+  }
+
+  // Range condition management for numeric range questions
+  const addRangeCondition = (pathId, questionId) => {
+    const newPaths = localData.responsePaths.map(path => {
+      if (path.id === pathId) {
+        const newCondition = {
+          id: `range_cond_${Date.now()}`,
+          questionId: questionId,
+          operator: 'between',  // default to 'between'
+          minValue: null,
+          maxValue: null,
+          value: null  // for single-value operators
+        }
+        return {
+          ...path,
+          rangeConditions: [...(path.rangeConditions || []), newCondition]
+        }
+      }
+      return path
+    })
+    handleChange('responsePaths', newPaths)
+  }
+
+  const updateRangeCondition = (pathId, conditionId, field, value) => {
+    const newPaths = localData.responsePaths.map(path => {
+      if (path.id === pathId) {
+        return {
+          ...path,
+          rangeConditions: (path.rangeConditions || []).map(cond =>
+            cond.id === conditionId ? { ...cond, [field]: value } : cond
+          )
+        }
+      }
+      return path
+    })
+    handleChange('responsePaths', newPaths)
+  }
+
+  const removeRangeCondition = (pathId, conditionId) => {
+    const newPaths = localData.responsePaths.map(path => {
+      if (path.id === pathId) {
+        return {
+          ...path,
+          rangeConditions: (path.rangeConditions || []).filter(cond => cond.id !== conditionId)
+        }
+      }
+      return path
+    })
+    handleChange('responsePaths', newPaths)
+  }
+
   const renderNodeSpecificFields = () => {
     switch (node.type) {
       case 'email':
@@ -232,17 +332,117 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete }) {
               </p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Subject
-              </label>
-              <input
-                type="text"
-                value={localData.subject || ''}
-                onChange={(e) => handleChange('subject', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter email subject..."
-              />
+            {/* A/B/C Subject Line Testing */}
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900">
+                    📧 Email Subject Lines - A/B/C Testing
+                  </label>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Create 3 variants to test different approaches. Industry best: 1,500+ recipients per variant.
+                  </p>
+                </div>
+              </div>
+
+              {/* Variant Tabs */}
+              <div className="flex items-center space-x-2 mb-3">
+                {ensureSubjectVariants().map((variant) => {
+                  const colors = {
+                    A: { bg: 'bg-blue-500', bgLight: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-500' },
+                    B: { bg: 'bg-green-500', bgLight: 'bg-green-100', text: 'text-green-700', border: 'border-green-500' },
+                    C: { bg: 'bg-purple-500', bgLight: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-500' }
+                  }
+                  const color = colors[variant.id]
+                  const isActive = activeSubjectVariant === variant.id
+
+                  return (
+                    <button
+                      key={variant.id}
+                      onClick={() => setActiveSubjectVariant(variant.id)}
+                      className={`flex-1 px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                        isActive
+                          ? `${color.bg} text-white shadow-md scale-105`
+                          : `${color.bgLight} ${color.text} hover:shadow-sm`
+                      }`}
+                    >
+                      <div className="flex items-center justify-center space-x-2">
+                        <span className="text-lg font-bold">{variant.id}</span>
+                        {variant.subject && (
+                          <span className="text-xs opacity-75">✓</span>
+                        )}
+                      </div>
+                      <div className="text-xs mt-1 opacity-90">
+                        {variant.weight}%
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Active Variant Input */}
+              {ensureSubjectVariants().map((variant) => {
+                if (variant.id !== activeSubjectVariant) return null
+
+                const colors = {
+                  A: { border: 'border-blue-300', focus: 'focus:border-blue-500 focus:ring-blue-500' },
+                  B: { border: 'border-green-300', focus: 'focus:border-green-500 focus:ring-green-500' },
+                  C: { border: 'border-purple-300', focus: 'focus:border-purple-500 focus:ring-purple-500' }
+                }
+                const color = colors[variant.id]
+
+                return (
+                  <div key={variant.id} className="space-y-2">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-medium text-gray-700">
+                          Subject Line {variant.id}
+                        </label>
+                        <div className="flex items-center space-x-2">
+                          <label className="text-xs text-gray-600">Split %:</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={variant.weight}
+                            onChange={(e) => updateVariantWeight(variant.id, e.target.value)}
+                            className="w-16 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 text-center"
+                          />
+                        </div>
+                      </div>
+                      <input
+                        type="text"
+                        value={variant.subject}
+                        onChange={(e) => updateSubjectVariant(variant.id, e.target.value)}
+                        className={`w-full px-3 py-2 border-2 ${color.border} rounded-lg ${color.focus} focus:ring-2 bg-white`}
+                        placeholder={`Enter subject line variant ${variant.id}...`}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+
+              {/* All Variants Preview */}
+              <div className="mt-3 pt-3 border-t border-gray-200">
+                <div className="text-xs font-medium text-gray-700 mb-2">All Variants Preview:</div>
+                <div className="space-y-1">
+                  {ensureSubjectVariants().map((variant) => (
+                    <div key={variant.id} className="flex items-start space-x-2 text-xs">
+                      <span className={`font-bold ${
+                        variant.id === 'A' ? 'text-blue-600' :
+                        variant.id === 'B' ? 'text-green-600' :
+                        'text-purple-600'
+                      }`}>
+                        {variant.id}:
+                      </span>
+                      <span className={`flex-1 ${!variant.subject ? 'text-gray-400 italic' : 'text-gray-700'}`}>
+                        {variant.subject || 'Not set'}
+                      </span>
+                      <span className="text-gray-500">({variant.weight}%)</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* MJML Template Editor */}
@@ -331,6 +531,17 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete }) {
                   ? 'Rich text editor with formatting options'
                   : 'Plain text or HTML code view'}
               </p>
+            </div>
+
+            {/* Expand Editor Button */}
+            <div className="flex justify-center pt-2">
+              <button
+                onClick={() => setIsEmailModalOpen(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-sm hover:shadow-md"
+              >
+                <Maximize2 className="w-4 h-4" />
+                <span className="text-sm font-medium">Expand Editor</span>
+              </button>
             </div>
           </>
         )
@@ -699,6 +910,134 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete }) {
                       </div>
                     )}
 
+                    {/* Numeric Range Routing */}
+                    {questions.filter(q => q.questionType === 'range').length > 0 && (
+                      <div className="mb-3 pb-3 border-b border-gray-200">
+                        <div className="text-xs font-medium text-gray-700 mb-2">
+                          📊 Numeric Range Routing (Optional)
+                        </div>
+
+                        {/* List of range conditions */}
+                        <div className="space-y-2">
+                          {(path.rangeConditions || []).map((condition) => {
+                            const question = questions.find(q => q.id === condition.questionId)
+                            if (!question) return null
+
+                            return (
+                              <div key={condition.id} className="bg-gray-50 border border-gray-200 rounded p-2">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="text-xs font-medium text-gray-700">
+                                    Q: {question.text || 'Untitled question'}
+                                  </div>
+                                  <button
+                                    onClick={() => removeRangeCondition(path.id, condition.id)}
+                                    className="p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded"
+                                  >
+                                    <Trash className="w-3 h-3" />
+                                  </button>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                  {/* Operator selector */}
+                                  <div>
+                                    <select
+                                      value={condition.operator || 'between'}
+                                      onChange={(e) => updateRangeCondition(path.id, condition.id, 'operator', e.target.value)}
+                                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 bg-white"
+                                    >
+                                      <option value="lte">Less than or equal to (≤)</option>
+                                      <option value="gte">Greater than or equal to (≥)</option>
+                                      <option value="eq">Equal to (=)</option>
+                                      <option value="between">Between (range)</option>
+                                    </select>
+                                  </div>
+
+                                  {/* Value inputs based on operator */}
+                                  {condition.operator === 'between' ? (
+                                    <div className="flex items-center space-x-2">
+                                      <input
+                                        type="number"
+                                        value={condition.minValue !== null ? condition.minValue : ''}
+                                        onChange={(e) => updateRangeCondition(path.id, condition.id, 'minValue', e.target.value === '' ? null : parseInt(e.target.value))}
+                                        className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+                                        placeholder="Min"
+                                      />
+                                      <span className="text-xs text-gray-500">to</span>
+                                      <input
+                                        type="number"
+                                        value={condition.maxValue !== null ? condition.maxValue : ''}
+                                        onChange={(e) => updateRangeCondition(path.id, condition.id, 'maxValue', e.target.value === '' ? null : parseInt(e.target.value))}
+                                        className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+                                        placeholder="Max"
+                                      />
+                                    </div>
+                                  ) : (
+                                    <input
+                                      type="number"
+                                      value={condition.value !== null ? condition.value : ''}
+                                      onChange={(e) => updateRangeCondition(path.id, condition.id, 'value', e.target.value === '' ? null : parseInt(e.target.value))}
+                                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+                                      placeholder="Value"
+                                    />
+                                  )}
+
+                                  {/* Condition preview */}
+                                  {(() => {
+                                    const op = condition.operator || 'between'
+                                    if (op === 'between' && condition.minValue !== null && condition.maxValue !== null) {
+                                      return (
+                                        <div className="text-xs text-green-600">
+                                          ✓ {condition.minValue} - {condition.maxValue} → {path.label}
+                                        </div>
+                                      )
+                                    } else if (op !== 'between' && condition.value !== null) {
+                                      const opSymbol = { lte: '≤', gte: '≥', eq: '=' }[op]
+                                      return (
+                                        <div className="text-xs text-green-600">
+                                          ✓ Response {opSymbol} {condition.value} → {path.label}
+                                        </div>
+                                      )
+                                    }
+                                  })()}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+
+                        {/* Add condition button with question selector */}
+                        {(path.rangeConditions || []).length < questions.filter(q => q.questionType === 'range').length && (
+                          <div className="mt-2">
+                            <select
+                              onChange={(e) => {
+                                if (e.target.value) {
+                                  addRangeCondition(path.id, e.target.value)
+                                  e.target.value = ''
+                                }
+                              }}
+                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 bg-white"
+                            >
+                              <option value="">+ Add Range Condition</option>
+                              {questions
+                                .filter(q => q.questionType === 'range')
+                                .filter(q => !(path.rangeConditions || []).some(c => c.questionId === q.id))
+                                .map(q => (
+                                  <option key={q.id} value={q.id}>
+                                    {q.text || 'Untitled question'}
+                                  </option>
+                                ))}
+                            </select>
+                          </div>
+                        )}
+
+                        {(path.rangeConditions || []).length === 0 && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            No range conditions set. Add conditions to route responses based on numeric values.
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {/* Advanced Logic Rules */}
                     {allResponseOptions.length > 0 && (
                       <div className="mb-3 pb-3 border-b border-gray-200">
@@ -1045,81 +1384,93 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete }) {
   }
 
   return (
-    <div className="w-96 bg-white border-l border-gray-200 flex flex-col h-full">
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">Edit Node</h2>
-        <button
-          onClick={onClose}
-          className="p-1 hover:bg-gray-100 rounded transition-colors"
-        >
-          <X className="w-5 h-5 text-gray-600" />
-        </button>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Node Title <span className="text-gray-500 font-normal">(not visible to customers)</span>
-          </label>
-          <input
-            type="text"
-            value={localData.label || ''}
-            onChange={(e) => handleChange('label', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Enter node title..."
-          />
+    <>
+      <div className="w-96 bg-white border-l border-gray-200 flex flex-col h-full">
+        {/* Header */}
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">Edit Node</h2>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-gray-100 rounded transition-colors"
+          >
+            <X className="w-5 h-5 text-gray-600" />
+          </button>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Description <span className="text-gray-500 font-normal">(not visible to customers)</span>
-          </label>
-          <textarea
-            value={localData.description || ''}
-            onChange={(e) => handleChange('description', e.target.value)}
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Add a description..."
-          />
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Node Title <span className="text-gray-500 font-normal">(not visible to customers)</span>
+            </label>
+            <input
+              type="text"
+              value={localData.label || ''}
+              onChange={(e) => handleChange('label', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter node title..."
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Description <span className="text-gray-500 font-normal">(not visible to customers)</span>
+            </label>
+            <textarea
+              value={localData.description || ''}
+              onChange={(e) => handleChange('description', e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Add a description..."
+            />
+          </div>
+
+          {renderNodeSpecificFields()}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Internal Notes
+            </label>
+            <textarea
+              value={localData.notes || ''}
+              onChange={(e) => handleChange('notes', e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Add internal notes (not visible to customers)..."
+            />
+          </div>
         </div>
 
-        {renderNodeSpecificFields()}
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Internal Notes
-          </label>
-          <textarea
-            value={localData.notes || ''}
-            onChange={(e) => handleChange('notes', e.target.value)}
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Add internal notes (not visible to customers)..."
-          />
+        {/* Footer */}
+        <div className="p-4 border-t border-gray-200 space-y-2">
+          <button
+            onClick={handleSave}
+            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          >
+            Save Changes
+          </button>
+          <button
+            onClick={handleDelete}
+            className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center justify-center"
+          >
+            <Trash className="w-4 h-4 mr-2" />
+            Delete Node
+          </button>
+          <p className="text-xs text-gray-500 text-center mt-2">
+            Tip: Press Delete or Backspace to delete selected node
+          </p>
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="p-4 border-t border-gray-200 space-y-2">
-        <button
-          onClick={handleSave}
-          className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-        >
-          Save Changes
-        </button>
-        <button
-          onClick={handleDelete}
-          className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center justify-center"
-        >
-          <Trash className="w-4 h-4 mr-2" />
-          Delete Node
-        </button>
-        <p className="text-xs text-gray-500 text-center mt-2">
-          Tip: Press Delete or Backspace to delete selected node
-        </p>
-      </div>
-    </div>
+      {/* Email Editor Modal */}
+      {node.type === 'email' && (
+        <EmailEditorModal
+          isOpen={isEmailModalOpen}
+          node={{ ...node, data: localData }}
+          onSave={handleEmailModalSave}
+          onClose={() => setIsEmailModalOpen(false)}
+        />
+      )}
+    </>
   )
 }

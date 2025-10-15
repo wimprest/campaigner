@@ -1,187 +1,271 @@
-# Campaign Flowchart Builder - MVP Phase 1
+# Campaign Flowchart Builder - Phase 2 Complete ✨
 
-A web-based marketing campaign flowchart tool that allows you to visually design and manage campaign workflows.
+A visual, drag-and-drop marketing campaign builder for designing email campaigns, surveys, conditional logic, and automated workflows through an intuitive flowchart interface.
 
-## Features Implemented (Phase 1)
+**Target Users**: Marketing teams, campaign managers, and automation specialists
 
-### Core Functionality
-- **Visual Flowchart Builder**: Drag-and-drop canvas using React Flow
-- **5 Node Types**:
-  - Email Node - Design email campaigns
-  - Survey Node - Create questions with multiple response options
-  - Conditional Node - Add if/then branching logic
-  - Action Node - Generic action triggers
-  - Delay Node - Add time delays between steps
+## 🎯 Features (Phase 2 Complete)
 
-### Editing & Content
-- **Click-to-Edit**: Click any node to open the content panel
-- **Content Panel**: Edit node properties, content, and settings
-- **Survey Logic**: Add/edit/remove response options for surveys
-- **Rich Node Data**: Title, description, internal notes, and type-specific fields
+### Visual Flowchart Builder
+- **Drag-and-drop** canvas using React Flow
+- **5 Node Types**: Email, Survey, Conditional, Action, Delay
+- **Visual connections** with colored paths and labels
+- **Pan & zoom** controls with minimap
+- **Undo/Redo** functionality (Ctrl+Z / Ctrl+Y)
+- **Delete nodes/edges** (Delete/Backspace key)
 
-### Data Management
-- **Save/Load**: Persist campaigns to browser localStorage
-- **JSON Export**: Download campaigns as JSON files
-- **Clear Canvas**: Reset and start fresh
+### Email Campaigns
+- **6 MJML Templates**: Blank, Welcome, Announcement, Survey, Promotional, Re-engagement
+- **WYSIWYG Editor** (ReactQuill) with Visual/Code toggle
+- **Rich text formatting**: Headers, bold, italic, lists, colors, links, images
+- **A/B/C Subject Line Testing** ⭐ NEW
+  - Create 3 subject line variants
+  - Configure split percentages (default: 33/33/34%)
+  - Color-coded interface (blue/green/purple)
+  - Visual badges showing test status
+- **Variable support**: `{{ firstName }}`, `{{ ctaLink }}`
+- **Expandable editor modal** for full-screen editing
 
-### UI/UX
-- **Professional Interface**: Clean layout with sidebar, canvas, and editing panel
-- **Zoom & Pan**: Full canvas navigation with controls
-- **MiniMap**: Quick navigation for large flowcharts
-- **Visual Connections**: Connect nodes to create workflow paths
-- **Responsive Design**: Works well for client presentations
+### Advanced Survey System
+- **Multi-question surveys** with collapsible UI
+- **4 Question Types**:
+  - Radio (single choice)
+  - Checkbox (multiple choice)
+  - Text input
+  - Numeric range
+- **4 Routing Methods**:
+  1. **Simple mapping** - Map specific options to paths
+  2. **Score-based routing** - Assign points, route by total score
+  3. **Numeric range routing** ⭐ NEW - Route by numeric values (≤, ≥, =, between)
+  4. **Advanced AND/OR/NOT logic** - Complex multi-option conditions
 
-## Getting Started
+#### Numeric Range Routing Example
+```
+Question: "How many documents do you process monthly?"
+- Path 1: response ≤ 100
+- Path 2: response between 101-500
+- Path 3: response ≥ 501
+```
+
+### Save/Load/Export
+- **Browser localStorage** for quick persistence
+- **JSON import/export** with metadata
+- **Email ZIP export**: MJML files, HTML placeholders, metadata
+- **Interactive HTML viewer**: Standalone campaign viewer
+- **Template library**: 3 pre-built campaigns (Welcome Series, Satisfaction Survey, Re-engagement)
+- **Campaign naming** - Save campaigns with custom names
+
+## 🚀 Quick Start
 
 ### Installation
 ```bash
 npm install
 ```
 
-### Development Server
+### Development
 ```bash
 npm run dev
+# Opens at http://localhost:3002
 ```
-The application will open at `http://localhost:3000`
 
-### Build for Production
+### Build
 ```bash
 npm run build
 ```
 
-## How to Use
+## 📖 Usage Guide
 
-### Creating a Flowchart
-1. **Drag Nodes**: Drag node types from the left sidebar onto the canvas
-2. **Connect Nodes**: Click and drag from a node's handle (circle) to another node
-3. **Edit Nodes**: Click any node to open the content panel on the right
-4. **Save Changes**: Click "Save Changes" in the content panel after editing
-5. **Save Campaign**: Click "Save" in the top bar to store in localStorage
+### Creating Your First Campaign
 
-### Node Types Explained
+1. **Add Email Node**
+   - Drag "Email" from sidebar to canvas
+   - Click node to open editor
+   - Choose MJML template or start blank
+   - Add subject line variants (A/B/C testing)
+   - Write email content with WYSIWYG editor
 
-**Email Node (Blue)**
-- Add email subject and content
-- Perfect for email campaign steps
+2. **Add Survey Node**
+   - Drag "Survey" from sidebar
+   - Click to add questions
+   - Choose question type (radio, checkbox, text, range)
+   - Add response options
+   - Configure routing paths
 
-**Survey Node (Green)**
-- Create questions with multiple response options
-- Add or remove response options dynamically
-- Use for collecting customer feedback
+3. **Configure Survey Routing**
+   - **Simple**: Check boxes to map options to paths
+   - **Score-based**: Assign points to options, set score thresholds
+   - **Range routing**: For numeric questions, set value ranges
+   - **Advanced**: Use AND/OR/NOT logic for complex rules
 
-**Conditional Node (Purple)**
-- Create if/then branching logic
-- Define conditions and paths for true/false outcomes
-- Has two output handles for branching
+4. **Connect Nodes**
+   - Drag from output handle (bottom) to input handle (top)
+   - Survey nodes show multiple colored outputs (one per path)
 
-**Action Node (Orange)**
-- Generic action trigger (e.g., "Update CRM", "Send SMS")
-- Flexible for various campaign actions
+5. **Save & Export**
+   - Click "Save" to store in browser
+   - Use "Export" menu for JSON, HTML, or Email ZIP
 
-**Delay Node (Red)**
-- Add time delays (minutes, hours, days, weeks)
-- Control pacing of campaign steps
+### Keyboard Shortcuts
 
-### Saving & Loading
+- **Ctrl+Z** / **Ctrl+Y** - Undo / Redo
+- **Delete** / **Backspace** - Delete selected node or edge
+- **Mouse Wheel** - Zoom in/out
+- **Click + Drag** - Pan canvas
 
-**Save to Browser**
-- Click "Save" button - stores in localStorage
-- Survives browser refresh
-- One save slot per browser
+## 🏗️ Tech Stack
 
-**Load from Browser**
-- Click "Load" button - restores last saved campaign
-
-**Export as JSON**
-- Click "Export JSON" - downloads campaign file
-- Share with team or backup campaigns
-- Future: Import functionality coming
-
-**Clear Canvas**
-- Click "Clear" button - removes all nodes
-- Confirmation required
-
-## Technical Stack
-
-- **React 18** - UI framework
+- **React 18** - UI framework with hooks
 - **Vite** - Build tool and dev server
 - **React Flow 11** - Flowchart visualization
-- **Tailwind CSS** - Styling
-- **Lucide React** - Icons
+- **Tailwind CSS** - Utility-first styling
+- **ReactQuill** - WYSIWYG rich text editor
+- **MJML** - Email template framework
+- **JSZip** - ZIP file creation
+- **Lucide React** - Icon library
 
-## Project Structure
+## 📂 Project Structure
 
 ```
 campaign/
 ├── src/
 │   ├── components/
-│   │   ├── nodes/
-│   │   │   ├── EmailNode.jsx
-│   │   │   ├── SurveyNode.jsx
-│   │   │   ├── ConditionalNode.jsx
-│   │   │   ├── ActionNode.jsx
-│   │   │   └── DelayNode.jsx
-│   │   ├── Sidebar.jsx
-│   │   ├── TopBar.jsx
-│   │   └── ContentPanel.jsx
-│   ├── App.jsx
-│   ├── main.jsx
-│   └── index.css
-├── index.html
+│   │   ├── nodes/              # 5 custom node components
+│   │   ├── ContentPanel.jsx    # Main editor (1400+ lines)
+│   │   ├── EmailEditorModal.jsx # Full-screen email editor
+│   │   ├── Sidebar.jsx         # Node palette
+│   │   └── TopBar.jsx          # Save/Load/Export menu
+│   ├── utils/
+│   │   ├── exportUtils.js      # JSON/HTML/ZIP exports
+│   │   ├── emailTemplates.js   # 6 MJML templates
+│   │   ├── campaignTemplates.js # 3 pre-built campaigns
+│   │   └── surveyLogic.js      # Path evaluation engine
+│   ├── App.jsx                 # Main app & data models
+│   └── main.jsx                # React entry point
+├── Claude.md                   # Detailed technical docs
 └── package.json
 ```
 
-## Next Steps (Phase 2 Planning)
+## 📚 Documentation
 
-- Rich text editor (React Quill) for email content
-- File attachment support
-- Import JSON campaigns
-- Shareable URLs (view-only mode)
-- Export as standalone HTML
-- Auto-layout feature
-- Enhanced branching visualization
-- Multi-select and bulk operations
-- Undo/Redo functionality
-- Campaign templates
+For detailed technical documentation, architecture decisions, and development guidelines, see [Claude.md](./Claude.md).
 
-## Browser Support
+## 🔄 Data Models
 
-- Chrome (recommended)
-- Firefox
-- Safari
-- Edge
+### Email Node Structure
+```javascript
+{
+  label: "Welcome Email",
+  subjectVariants: [
+    { id: "A", subject: "Welcome!", weight: 33 },
+    { id: "B", subject: "Get started", weight: 33 },
+    { id: "C", subject: "Your account is ready", weight: 34 }
+  ],
+  emailTemplate: "welcome",
+  mjmlTemplate: "<mjml>...</mjml>",
+  emailContent: "<p>Rich text...</p>"
+}
+```
 
-## Development Notes
+### Survey Node with Range Routing
+```javascript
+{
+  questions: [
+    {
+      id: "q_1",
+      text: "Documents per month?",
+      questionType: "range",
+      responseOptions: []
+    }
+  ],
+  responsePaths: [
+    {
+      id: "path_1",
+      label: "Small Volume",
+      rangeConditions: [
+        {
+          questionId: "q_1",
+          operator: "lte",  // ≤, ≥, =, between
+          value: 100
+        }
+      ]
+    }
+  ]
+}
+```
 
-- Uses localStorage for persistence (no backend required)
-- Unique node IDs generated sequentially
-- React Flow handles zoom, pan, and node positioning
-- Tailwind provides utility-first styling
-- All components are functional with hooks
+## 🧪 Testing Checklist
 
-## Keyboard Shortcuts
+When making changes, verify:
 
-- **Delete/Backspace**: Remove selected node or edge
-- **Mouse Wheel**: Zoom in/out
-- **Click + Drag**: Pan canvas
-- **Shift + Click**: Multi-select (React Flow default)
+- [ ] Can create all 5 node types
+- [ ] Can connect nodes with edges
+- [ ] Can edit node content
+- [ ] A/B/C subject variants work
+- [ ] Numeric range routing configures correctly
+- [ ] Score calculation updates properly
+- [ ] Can save/load from localStorage
+- [ ] JSON export/import works
+- [ ] Email ZIP export includes MJML files
+- [ ] Interactive HTML viewer displays correctly
+- [ ] Undo/Redo functions properly
+- [ ] Delete key removes nodes/edges
 
-## Troubleshooting
+## 🐛 Troubleshooting
 
 **Nodes won't connect?**
-- Make sure you're dragging from output handle (bottom) to input handle (top)
+- Drag from output handle (bottom circle) to input handle (top circle)
 
-**Content panel won't open?**
-- Click directly on the node card (not the canvas)
+**Survey paths not showing?**
+- Click "Add Path" in response paths section
+- At least one path required for survey nodes
 
-**Can't see my nodes?**
-- Use the MiniMap (bottom right) to navigate
-- Click the "fit view" button in controls
+**A/B testing not visible?**
+- Check that subjectVariants array exists in node data
+- Try clicking each variant tab (A, B, C)
 
-**Save not working?**
-- Check browser console for errors
-- Ensure localStorage is enabled in browser settings
+**Range routing not appearing?**
+- Only shows when survey has range-type questions
+- Add a "Numeric Range" question first
+
+**Save not persisting?**
+- Check browser localStorage is enabled
+- Use Export → JSON for permanent backups
+
+**EBUSY warnings in Vite?**
+- Harmless Windows/Dropbox file locking warnings
+- Doesn't affect functionality
+
+## 🎯 Next Steps (Phase 3 Planned)
+
+- [ ] Survey testing modal (simulate responses)
+- [ ] Validation warnings (detect configuration issues)
+- [ ] Toast notifications (replace alert dialogs)
+- [ ] Node duplication (Ctrl+D)
+- [ ] Search & filter nodes
+- [ ] Version history
+
+## 🌟 Key Features
+
+✅ **Multi-question surveys** with unlimited questions
+✅ **Score-based routing** with point thresholds
+✅ **Numeric range routing** for value-based decisions
+✅ **Advanced AND/OR/NOT logic** for complex rules
+✅ **A/B/C subject line testing** with split percentages
+✅ **WYSIWYG email editor** with Visual/Code toggle
+✅ **6 MJML email templates** (export-ready)
+✅ **Undo/Redo** functionality
+✅ **Import/Export** (JSON, HTML, Email ZIP)
+✅ **Campaign templates** (3 pre-built flows)
+✅ **LocalStorage persistence**
+
+## 📄 License
+
+MIT
 
 ---
 
-Built with React Flow and Tailwind CSS
+**Version**: 0.2 (Phase 2 Complete)
+**Last Updated**: October 15, 2025
+**Status**: Active Development
+
+Built with React Flow, Tailwind CSS, and MJML
