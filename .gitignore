@@ -21,6 +21,18 @@ dist-ssr
 .dropbox.attr
 .dropbox.cache
 
+# Campaign data files (user-generated content)
+# These files contain personal campaign data and should not be committed
+campaign-*.json
+campaign-*.zip
+campaign-viewer-*.html
+*Drip Campaign.json
+*.campaign.json
+
+# Temporary files
+nul
+vite.config.js.timestamp-*
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
