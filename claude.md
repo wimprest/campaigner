@@ -1,4 +1,4 @@
-# Campaign Flowchart Builder - Project Documentation
+# Campaign Builder - Project Documentation
 
 ## Project Overview
 
@@ -39,6 +39,7 @@ campaign/
 │   │   │   ├── ActionNode.jsx   # CRM/automation actions
 │   │   │   └── DelayNode.jsx    # Time-based delays
 │   │   ├── ContentPanel.jsx     # Right-side editor panel (CRITICAL FILE)
+│   │   ├── EmailEditorModal.jsx # Full-screen email editor with template manager
 │   │   ├── Sidebar.jsx          # Left-side node palette
 │   │   └── TopBar.jsx           # Save/Load/Export menu
 │   ├── utils/
@@ -224,14 +225,15 @@ campaign/
   - Render type-specific editors for each node
   - Survey question/option/path management
   - ReactQuill WYSIWYG integration
-  - Email template selection
-  - A/B/C subject line testing UI ⭐ NEW
+  - Email template selection with quick "Manage" button (line 320-327) ⭐ NEW
+  - A/B/C subject line testing UI
   - Score calculation logic
-  - Numeric range routing UI ⭐ NEW
+  - Numeric range routing UI
   - Advanced rules UI (AND/OR/NOT)
+  - Opens EmailEditorModal for full-screen editing
 - **Key sections**:
   - Lines 1-220: State & helper functions (including new range condition helpers)
-  - Lines 220-460: Email editor (MJML + ReactQuill + A/B testing)
+  - Lines 220-460: Email editor (MJML + ReactQuill + A/B testing + Manage button)
   - Lines 460-1040: Survey editor (questions, paths, scoring, range routing, advanced rules)
   - Lines 1040-1140: Other node editors (conditional, delay, action)
 - **Tips for editing**:
@@ -239,6 +241,7 @@ campaign/
   - Score calculation happens in `calculateScoreRange()` function
   - Path mapping uses checkbox UI with `toggleOptionInPath()` function
   - Range conditions managed via `addRangeCondition()`, `updateRangeCondition()`, `removeRangeCondition()`
+  - Template management accessible via inline "Manage" button or "Expand Editor" button
 
 ### `utils/surveyLogic.js` (NEW - Phase 2)
 - **Purpose**: Survey response evaluation engine
@@ -259,6 +262,20 @@ campaign/
   - `exportAsInteractiveHTML()` - Standalone viewer
   - `generateBasicMJML()` - Convert plain text to MJML
 - **Important**: MJML compilation happens externally (mjml.io or API), not in browser
+
+### `EmailEditorModal.jsx` (NEW - Phase 2)
+- **Purpose**: Full-screen modal for email editing and template management
+- **Features**:
+  - Full-screen WYSIWYG email editor
+  - Visual/Code toggle for MJML editing
+  - Template manager with CRUD operations (line 256-268, 396-619)
+  - Create, edit, delete custom templates
+  - 6 default MJML templates (Welcome, Announcement, Survey, etc.)
+  - Accessible via "Manage" button in ContentPanel (line 320) or "Expand Editor" button (line 539)
+- **Key sections**:
+  - Lines 1-50: State management and template functions
+  - Lines 256-395: Main editor interface
+  - Lines 396-619: Template manager UI
 
 ### `SurveyNode.jsx`
 - **Purpose**: Visual representation of survey nodes in flowchart
@@ -308,7 +325,7 @@ campaign/
 ## Known Issues & Limitations
 
 ### Current Issues
-1. **Vite EBUSY warnings** on Windows/Dropbox - harmless file lock warnings, doesn't affect functionality
+1. ~~**Vite EBUSY warnings** on Windows/Dropbox~~ - **FIXED** (v0.2.1): Cache moved to system temp directory
 2. **No toast notifications** - using browser `alert()` (works but not polished)
 3. **No undo/redo** - users must manually save versions
 4. **No collaborative editing** - single user, localStorage only
@@ -636,9 +653,13 @@ Currently none needed. Future variables:
 - **Prevention**: Always provide default values in data models
 
 **Issue**: "EBUSY: resource busy" warnings in Vite
-- **Cause**: Windows/Dropbox file locking during HMR
-- **Impact**: None - warnings can be ignored
-- **Fix**: Move project outside Dropbox, or disable Dropbox sync temporarily
+- **Cause**: Windows/Dropbox file locking during HMR when cache is in synced folder
+- **Impact**: Could cause 504 errors and white screen on load
+- **Fix**: ✅ **RESOLVED in v0.2.1** - Vite cache now stored in system temp directory
+  - Updated `vite.config.js` to use `path.join(tmpdir(), 'vite-cache-campaign')`
+  - Cache location: `C:\Users\[username]\AppData\Local\Temp\vite-cache-campaign`
+  - No longer conflicts with Dropbox sync
+- **Legacy Fix**: If issue persists, move project outside Dropbox or disable sync temporarily
 
 **Issue**: Survey paths not showing in node
 - **Cause**: `responsePaths` array missing or empty in data
@@ -664,6 +685,7 @@ To add debug logging (optional future feature):
 
 - **v0.1** (Phase 1): Basic flowchart, 5 node types, save/load, simple surveys
 - **v0.2** (Phase 2): Multi-question surveys, score-based routing, advanced AND/OR/NOT logic, WYSIWYG email editor, A/B/C subject line testing, numeric range routing
+- **v0.2.1** (Bug Fixes & UX): Fixed Vite EBUSY errors by moving cache to system temp, added quick "Manage" button in email template section
 - **v0.3** (Planned): Survey testing, validation warnings, UX polish
 
 ---
@@ -703,6 +725,6 @@ npm run dev
 
 ---
 
-**Last Updated**: 2025-10-15 (Phase 2 Complete - A/B Testing & Range Routing Added)
-**Maintainer**: Campaign Builder Team
+**Last Updated**: 2025-10-22 (v0.2.1 - Vite Cache Fix & Template Management UX)
+**Project**: Campaign Builder
 **Status**: Active Development

@@ -43,7 +43,7 @@ export default function TopBar({
     <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
       <div className="flex items-center space-x-4">
         <div className="flex items-center">
-          <h1 className="text-xl font-bold text-gray-900">Campaign Flowchart Builder</h1>
+          <h1 className="text-xl font-bold text-gray-900">Campaign Builder</h1>
           <span className="ml-3 px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
             Phase 2
           </span>

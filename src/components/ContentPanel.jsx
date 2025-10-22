@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { X, Plus, Trash, Mail, ChevronDown, ChevronUp, Maximize2 } from 'lucide-react'
+import { X, Plus, Trash, Mail, ChevronDown, ChevronUp, Maximize2, Settings } from 'lucide-react'
 import { emailTemplates, getTemplateList } from '../utils/emailTemplates'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
@@ -310,11 +310,24 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete }) {
           <>
             {/* Email Template Selector */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-              <div className="flex items-center mb-2">
-                <Mail className="w-4 h-4 mr-2 text-blue-600" />
-                <label className="text-sm font-medium text-blue-900">
-                  Email Template
-                </label>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center">
+                  <Mail className="w-4 h-4 mr-2 text-blue-600" />
+                  <label className="text-sm font-medium text-blue-900">
+                    Email Template
+                  </label>
+                </div>
+                {/* Quick access button to open EmailEditorModal with template manager
+                    Added in v0.2.1 for easier access to template CRUD operations
+                    Opens same modal as "Expand Editor" but provides direct access from ContentPanel */}
+                <button
+                  onClick={() => setIsEmailModalOpen(true)}
+                  className="flex items-center space-x-1 px-2 py-1 text-xs font-medium text-blue-700 hover:text-blue-900 hover:bg-blue-100 rounded transition-colors"
+                  title="Manage email templates"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                  <span>Manage</span>
+                </button>
               </div>
               <select
                 value={localData.emailTemplate || 'blank'}

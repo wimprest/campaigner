@@ -14,7 +14,12 @@
       "Bash(git push:*)",
       "Bash(git pull:*)",
       "Bash(npm uninstall:*)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Add A/B/C subject line testing and numeric range routing\n\nPhase 2 Complete - Major feature additions:\n\nEmail Enhancements:\n- A/B/C subject line testing with 3 variants\n- Configurable split percentages (default 33/33/34%)\n- Color-coded tabbed interface (blue/green/purple)\n- Visual badges on nodes showing test status\n- Backward compatible with single subject field\n\nSurvey Enhancements:\n- Numeric range routing for range-type questions\n- 4 operator types: ≤, ≥, =, between (min/max)\n- Live preview of routing conditions\n- Multiple conditions per path supported\n- Use case: Route by document volume, user count, revenue, etc.\n\nUI Improvements:\n- Full-screen email editor modal\n- Campaign naming with editable title\n- Enhanced ContentPanel with 1400+ lines of logic\n- Improved MJML template management\n- Better visual organization of routing options\n\nData Structure Updates:\n- Added subjectVariants array to email nodes\n- Added rangeConditions array to response paths\n- Campaign name saved with flowchart data\n- Full backward compatibility maintained\n\nDocumentation:\n- Updated Claude.md with new features and data structures\n- Comprehensive README.md rewrite for Phase 2\n- Added examples for range routing\n- Updated version history and tech stack\n\nFiles Modified:\n- src/App.jsx - Added rangeConditions to default paths\n- src/components/ContentPanel.jsx - Major expansion with A/B testing & range routing UI\n- src/components/EmailNode.jsx - Visual A/B test badge\n- src/components/EmailEditorModal.jsx - NEW: Full-screen editor\n- src/components/TopBar.jsx - Campaign name management\n- src/utils/exportUtils.js - Export campaign name\n- src/utils/emailTemplates.js - Template CRUD\n- README.md - Complete Phase 2 documentation\n- claude.md - Technical documentation update\n\n🤖 Generated with Claude Code\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(tree:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Read(//c/Users/pR0XY/**)"
     ],
     "deny": [],
     "ask": []

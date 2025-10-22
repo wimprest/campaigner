@@ -423,7 +423,7 @@
             "scoreMin": null,
             "scoreMax": null,
             "advancedRules": {
-              "enabled": false,
+              "enabled": true,
               "requireAll": [],
               "requireAny": [],
               "requireNone": []
@@ -492,8 +492,8 @@
         ]
       },
       "width": 280,
-      "height": 232,
-      "selected": true,
+      "height": 236,
+      "selected": false,
       "positionAbsolute": {
         "x": -109.05317797755413,
         "y": 800.0272143939666
@@ -725,7 +725,7 @@
       "id": "reactflow__edge-node_7-node_8"
     }
   ],
-  "exportDate": "2025-10-15T19:07:21.178Z",
+  "exportDate": "2025-10-15T19:55:10.941Z",
   "metadata": {
     "nodeCount": 9,
     "edgeCount": 12,

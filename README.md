@@ -1,4 +1,4 @@
-# Campaign Flowchart Builder - Phase 2 Complete ✨
+# Campaign Builder - Phase 2 Complete ✨
 
 A visual, drag-and-drop marketing campaign builder for designing email campaigns, surveys, conditional logic, and automated workflows through an intuitive flowchart interface.
 
@@ -16,9 +16,10 @@ A visual, drag-and-drop marketing campaign builder for designing email campaigns
 
 ### Email Campaigns
 - **6 MJML Templates**: Blank, Welcome, Announcement, Survey, Promotional, Re-engagement
+- **Quick "Manage" button** for easy template access ⭐ NEW (v0.2.1)
 - **WYSIWYG Editor** (ReactQuill) with Visual/Code toggle
 - **Rich text formatting**: Headers, bold, italic, lists, colors, links, images
-- **A/B/C Subject Line Testing** ⭐ NEW
+- **A/B/C Subject Line Testing**
   - Create 3 subject line variants
   - Configure split percentages (default: 33/33/34%)
   - Color-coded interface (blue/green/purple)
@@ -65,7 +66,7 @@ npm install
 ### Development
 ```bash
 npm run dev
-# Opens at http://localhost:3002
+# Opens at http://localhost:3000 (or next available port)
 ```
 
 ### Build
@@ -80,7 +81,7 @@ npm run build
 1. **Add Email Node**
    - Drag "Email" from sidebar to canvas
    - Click node to open editor
-   - Choose MJML template or start blank
+   - Choose MJML template or click "Manage" for template library
    - Add subject line variants (A/B/C testing)
    - Write email content with WYSIWYG editor
 
@@ -232,8 +233,9 @@ When making changes, verify:
 - Use Export → JSON for permanent backups
 
 **EBUSY warnings in Vite?**
-- Harmless Windows/Dropbox file locking warnings
-- Doesn't affect functionality
+- ✅ **FIXED in v0.2.1**: Cache moved to system temp directory
+- Vite cache no longer conflicts with Dropbox sync
+- If you still see warnings, they're harmless and can be ignored
 
 ## 🎯 Next Steps (Phase 3 Planned)
 
@@ -264,8 +266,8 @@ MIT
 
 ---
 
-**Version**: 0.2 (Phase 2 Complete)
-**Last Updated**: October 15, 2025
+**Version**: 0.2.1 (Bug Fixes & UX Improvements)
+**Last Updated**: October 22, 2025
 **Status**: Active Development
 
 Built with React Flow, Tailwind CSS, and MJML
