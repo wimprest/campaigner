@@ -6,7 +6,7 @@ A visual, drag-and-drop marketing campaign builder built with React and React Fl
 
 **Target Users**: Marketing teams, campaign managers, and automation specialists who need to design complex customer journeys without coding.
 
-**Current Phase**: Phase 3 Complete - Testing & Validation (Survey Testing, Path Validation, Campaign Flow Analysis)
+**Current Phase**: Phase 4 In Progress - UX Polish & Professional Features (Toast Notifications, Node Duplication, Bulk Operations complete)
 
 ## Tech Stack
 
@@ -309,8 +309,8 @@ campaign/
   - ActionNode: Orange ring (`ring-orange-500`)
   - DelayNode: Red ring (`ring-red-500`)
 - **Effects applied**:
-  - `ring-4 ring-{color}-500 ring-opacity-50` - Colored ring around node
-  - `shadow-xl` - Elevated shadow for depth
+  - `ring-8 ring-{color}-500 ring-opacity-75` - Prominent colored ring around node (doubled thickness, increased opacity for better visibility)
+  - `shadow-2xl` - Strong elevated shadow for clear depth perception
   - `scale-105` - 5% zoom effect
   - `transition-all` - Smooth transitions between states
 - **Use case**: Makes it immediately obvious which node is being edited in ContentPanel, especially useful for:
@@ -487,12 +487,24 @@ campaign/
 **Use case**: Quickly create similar emails or surveys without rebuilding from scratch
 **Implementation**: 130-line duplicate function in App.jsx handles complex ID remapping for survey nodes
 
-#### 3. Bulk Operations
+#### 3. Bulk Operations ✅ COMPLETE
 **Features**:
-- Multi-select nodes (Shift+Click or drag selection box)
-- Delete multiple nodes
-- Export selected nodes only
-- Group/ungroup nodes
+- **Multi-select**: Shift+Drag to draw selection box around nodes (partial overlap selects)
+- **Additive selection**: Shift+Click to add/remove nodes from current selection
+- **Select all**: Ctrl+A or Cmd+A to select all nodes at once
+- **Bulk duplication**: Duplicate multiple selected nodes with one keystroke (Ctrl+D)
+- **Bulk deletion**: Delete key removes all selected nodes (built-in React Flow feature)
+- **Visual feedback**: Bottom-left tooltip shows keyboard shortcuts and instructions
+- **Smart positioning**: Duplicated nodes offset by +50px x/y for easy identification
+**Implementation**:
+- React Flow's built-in multi-select props (`selectionOnDrag`, `panOnDrag`, `selectionKeyCode="Shift"`)
+- Pan still works with normal drag - selection requires Shift modifier
+- Refactored handleDuplicateNode to check for multiple selected nodes
+- Toast notifications confirm bulk actions (e.g., "3 nodes duplicated!")
+**Use case**:
+- Quickly duplicate multiple survey or email nodes for A/B testing variants
+- Delete multiple test nodes at once during campaign cleanup
+- Select entire campaign section for visual review
 
 #### 4. Search & Filter
 **Features**:
@@ -591,6 +603,46 @@ campaign/
 - Configure webhooks for events (survey completion, email open, etc.)
 - Test webhook delivery
 - Export webhook configuration
+
+### Phase 8: Mobile Support
+
+#### 1. Mobile Campaign Viewer (View-Only) ⭐ PLANNED
+**Goal**: Enable sharing campaigns for mobile viewing without editing capability
+**User Story**: "I'd like to be able to share a .json file via email and have someone be able to view and click around to see node contents even if they can't edit"
+
+**Features**:
+- **View-only mode**: Touch-friendly interface for viewing campaign flowcharts
+- **Node inspection**: Tap nodes to view full content (emails, survey questions, logic)
+- **Pan & zoom**: Touch gestures for navigation (pinch-to-zoom, two-finger pan)
+- **JSON import**: Load campaign files shared via email/cloud
+- **Responsive layout**: Optimized for phone and tablet screens
+- **No editing**: All modification controls hidden in view-only mode
+- **Share button**: Generate shareable links or QR codes (if backend added)
+
+**Implementation Approach**:
+1. **Easy Path** (Static export):
+   - Generate standalone mobile-optimized HTML file
+   - Include touch-friendly CSS and gestures
+   - Single file can be emailed or hosted
+   - No server required
+
+2. **Medium Path** (Progressive Web App):
+   - Add mobile viewport and touch handlers
+   - Detect mobile device and switch to view-only mode
+   - Service worker for offline viewing
+   - Install as app on mobile home screen
+
+3. **Advanced Path** (Dedicated mobile app):
+   - React Native or Flutter companion app
+   - Native file handling and sharing
+   - Deep linking from email attachments
+   - Push notifications for campaign updates
+
+**Recommended**: Start with Easy Path (mobile-optimized HTML export), upgrade to PWA if adoption grows
+
+**Difficulty**: Easy (mobile HTML export) / Medium (PWA with touch gestures) / Hard (native mobile app)
+
+**Priority**: User-requested feature for campaign sharing and collaboration
 
 ## Development Guidelines
 
@@ -769,6 +821,7 @@ To add debug logging (optional future feature):
 - **v0.3.0** (Phase 3 - Testing & Validation): Survey testing modal with real-time path evaluation, path validation warnings (per-path & unmapped options), "Other" text input for survey options, comprehensive campaign flow validation with graph analysis, clickable validation issues to open nodes, visual selection indicators (colored rings) on all node types
 - **v0.4.0** (Phase 4 - UX Polish): Toast notifications system (react-hot-toast), replaced all 14 browser alert() dialogs with modern, non-blocking toasts for save/load/export/error feedback
 - **v0.4.1** (Phase 4 - Node Duplication): One-click node duplication with Duplicate button and Ctrl+D/Cmd+D shortcut, smart ID regeneration for complex survey nodes, automatic label updating with "(Copy)" suffix
+- **v0.4.2** (Phase 4 - Bulk Operations): Multi-select with Shift+Drag selection box, Shift+Click additive selection, Ctrl+A select all, bulk duplication and deletion, visual keyboard shortcut tooltip, enhanced selection indicators (ring-8, opacity-75, shadow-2xl)
 
 ---
 
@@ -810,6 +863,6 @@ npm run dev
 
 ---
 
-**Last Updated**: 2025-10-24 (v0.4.1 - Phase 4: Toast Notifications + Node Duplication)
+**Last Updated**: 2025-10-24 (v0.4.2 - Phase 4: Bulk Operations Complete)
 **Project**: Campaign Builder
-**Status**: Active Development - Phase 4: 2 of 5 features complete
+**Status**: Active Development - Phase 4: 3 of 5 features complete

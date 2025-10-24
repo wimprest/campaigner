@@ -46,7 +46,7 @@ export default function TopBar({
         <div className="flex items-center">
           <h1 className="text-xl font-bold text-gray-900">Campaign Builder</h1>
           <span className="ml-3 px-2 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded">
-            Phase 3
+            Phase 4
           </span>
         </div>
         <div className="flex items-center">

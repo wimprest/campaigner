@@ -359,14 +359,8 @@ function FlowBuilder() {
     }
   }, [nodes])
 
-  // Duplicate a node
-  const handleDuplicateNode = useCallback((nodeId) => {
-    const nodeToDuplicate = nodes.find(n => n.id === nodeId)
-    if (!nodeToDuplicate) {
-      toast.error('Node not found!')
-      return
-    }
-
+  // Helper function to duplicate a single node
+  const duplicateSingleNode = useCallback((nodeToDuplicate) => {
     // Deep clone the node data
     const clonedData = JSON.parse(JSON.stringify(nodeToDuplicate.data))
 
@@ -479,15 +473,46 @@ function FlowBuilder() {
       selected: false
     }
 
-    // Add the new node
+    return newNode
+  }, [])
+
+  // Duplicate one or more nodes
+  const handleDuplicateNode = useCallback((nodeId) => {
+    // Check if multiple nodes are selected
+    const selectedNodes = nodes.filter(n => n.selected)
+
+    // If multiple nodes selected, duplicate all of them
+    if (selectedNodes.length > 1) {
+      const newNodes = selectedNodes.map(node => duplicateSingleNode(node))
+      setNodes((nds) => [...nds, ...newNodes])
+
+      // Save to history
+      const updatedNodes = [...nodes, ...newNodes]
+      saveToHistory(updatedNodes, edges)
+
+      toast.success(`${newNodes.length} nodes duplicated!`)
+      return
+    }
+
+    // Single node duplication (original behavior)
+    const nodeToDuplicate = nodeId
+      ? nodes.find(n => n.id === nodeId)
+      : selectedNodes[0]
+
+    if (!nodeToDuplicate) {
+      toast.error('No node selected to duplicate!')
+      return
+    }
+
+    const newNode = duplicateSingleNode(nodeToDuplicate)
     setNodes((nds) => [...nds, newNode])
 
     // Save to history
-    const newNodes = [...nodes, newNode]
-    saveToHistory(newNodes, edges)
+    const newNodesArray = [...nodes, newNode]
+    saveToHistory(newNodesArray, edges)
 
-    toast.success(`Node duplicated: ${clonedData.label || nodeToDuplicate.type}`)
-  }, [nodes, edges, setNodes])
+    toast.success(`Node duplicated: ${newNode.data.label || nodeToDuplicate.type}`)
+  }, [nodes, edges, setNodes, duplicateSingleNode])
 
   // Save current state to history
   const saveToHistory = useCallback((newNodes, newEdges) => {
@@ -572,12 +597,17 @@ function FlowBuilder() {
         redo()
       }
 
-      // Ctrl+D or Cmd+D - Duplicate selected node
+      // Ctrl+D or Cmd+D - Duplicate selected node(s)
       if ((event.ctrlKey || event.metaKey) && event.key === 'd' && !isTyping) {
         event.preventDefault()
-        if (selectedNode) {
-          handleDuplicateNode(selectedNode.id)
-        }
+        handleDuplicateNode()
+      }
+
+      // Ctrl+A or Cmd+A - Select all nodes
+      if ((event.ctrlKey || event.metaKey) && event.key === 'a' && !isTyping) {
+        event.preventDefault()
+        setNodes((nds) => nds.map(node => ({ ...node, selected: true })))
+        toast.success(`${nodes.length} nodes selected`)
       }
     }
 
@@ -585,7 +615,7 @@ function FlowBuilder() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [selectedNode, selectedEdge, deleteNode, deleteEdge, undo, redo, handleDuplicateNode])
+  }, [selectedNode, selectedEdge, deleteNode, deleteEdge, undo, redo, handleDuplicateNode, nodes, setNodes])
 
   // Save to history when nodes or edges change
   useEffect(() => {
@@ -636,6 +666,11 @@ function FlowBuilder() {
             onEdgeClick={onEdgeClick}
             onPaneClick={onPaneClick}
             nodeTypes={nodeTypes}
+            selectionOnDrag={true}
+            panOnDrag={true}
+            selectionKeyCode="Shift"
+            multiSelectionKeyCode="Shift"
+            selectionMode="partial"
             fitView
             className="bg-gray-50"
           >
@@ -643,6 +678,16 @@ function FlowBuilder() {
             <MiniMap />
             <Background variant="dots" gap={12} size={1} />
           </ReactFlow>
+
+          {/* Multi-select hint */}
+          <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur border border-gray-300 shadow-lg rounded-lg px-3 py-2 z-10">
+            <div className="text-xs text-gray-700 space-y-1">
+              <div><kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Shift</kbd> + Drag = Select multiple</div>
+              <div><kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Shift</kbd> + Click = Add to selection</div>
+              <div><kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Ctrl</kbd> + <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">A</kbd> = Select all</div>
+            </div>
+          </div>
+
           {selectedEdge && (
             <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white border border-gray-300 shadow-lg rounded-lg px-4 py-2 flex items-center space-x-3 z-10">
               <span className="text-sm text-gray-700">
