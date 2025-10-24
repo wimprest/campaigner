@@ -1,5 +1,6 @@
 import { saveAs } from 'file-saver'
 import JSZip from 'jszip'
+import toast from 'react-hot-toast'
 // Note: MJML to HTML conversion happens via external service or server
 // Browser can't run mjml2html directly
 
@@ -75,7 +76,7 @@ export const exportAllEmailsAsZip = async (nodes, campaignName = 'campaign') => 
   const emailNodes = nodes.filter(node => node.type === 'email')
 
   if (emailNodes.length === 0) {
-    alert('No email nodes found in this campaign!')
+    toast.error('No email nodes found in this campaign!')
     return
   }
 
@@ -181,7 +182,7 @@ export const exportSingleEmailHTML = (node) => {
   const mjmlBlob = new Blob([mjmlContent], { type: 'text/plain' })
   saveAs(mjmlBlob, `${fileName}.mjml`)
 
-  alert('MJML file exported! Convert to HTML at https://mjml.io/try-it-live')
+  toast.success('MJML file exported! Convert to HTML at https://mjml.io/try-it-live', { duration: 5000 })
 }
 
 // Export campaign as interactive HTML viewer

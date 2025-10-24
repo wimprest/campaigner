@@ -5,7 +5,7 @@ import { Clock } from 'lucide-react'
 export default function DelayNode({ data, selected }) {
   return (
     <div className={`bg-white rounded-lg shadow-md border-2 transition-all ${
-      selected ? 'border-red-500 ring-4 ring-red-500 ring-opacity-50 shadow-xl scale-105' : 'border-red-300'
+      selected ? 'border-red-500 ring-8 ring-red-500 ring-opacity-75 shadow-2xl scale-105' : 'border-red-300'
     } min-w-[200px] max-w-[250px]`}>
       <Handle type="target" position={Position.Top} className="w-3 h-3" />
 

@@ -24,6 +24,7 @@ A visual, drag-and-drop marketing campaign builder built with React and React Fl
 
 ### Icons & UI
 - **Lucide React** - Icon library
+- **react-hot-toast** - Toast notification system for user feedback
 - **Custom node components** - 5 specialized node types
 
 ## Project Structure
@@ -123,7 +124,17 @@ campaign/
 - **Interactive HTML viewer**: Standalone HTML file with all campaign data
 - **Template library**: 3 pre-built campaigns (Welcome Series, Satisfaction Survey, Re-engagement)
 
-### 5. Data Models
+### 5. User Experience & Feedback ⭐ PHASE 4
+- **Toast Notifications** - Modern, non-blocking notification system (react-hot-toast)
+  - Success toasts: Green with checkmark (save, load, export operations)
+  - Error toasts: Red with warning icon (validation errors, missing data)
+  - Auto-dismisses after 3-5 seconds
+  - Positioned at top-right corner
+  - No more blocking browser alert() dialogs!
+- **Visual Selection Indicators** - Colored rings around selected nodes (Phase 3)
+- **Validation Warnings** - Clickable issue cards that open nodes for editing (Phase 3)
+
+### 6. Data Models
 
 #### Survey Node Data Structure
 ```javascript
@@ -448,9 +459,20 @@ campaign/
 
 ### Phase 4: UX Polish & Professional Features
 
-#### 1. Replace alert() with Toast Notifications
-**Library**: react-hot-toast or sonner (lightweight)
-**Changes**: All `alert()` calls in App.jsx and ContentPanel.jsx
+#### 1. Replace alert() with Toast Notifications ✅ COMPLETE
+**Library**: react-hot-toast (lightweight, 14 alerts replaced)
+**Changes**: All `alert()` calls replaced in:
+- App.jsx (8 alerts) - Save, load, import, export, template operations
+- ContentPanel.jsx (1 alert) - Node updates
+- EmailEditorModal.jsx (3 alerts) - Template management
+- exportUtils.js (2 alerts) - Export operations
+**Features**:
+- Success toasts: Green with checkmark icon
+- Error toasts: Red with warning icon
+- Auto-dismiss after 3-5 seconds
+- Top-right positioning
+- Non-blocking, can show multiple toasts
+- Custom duration for longer messages (5s for MJML export instructions)
 
 #### 2. Node Duplication
 **Feature**: Right-click menu or Ctrl+D to duplicate nodes
@@ -736,6 +758,7 @@ To add debug logging (optional future feature):
 - **v0.2** (Phase 2): Multi-question surveys, score-based routing, advanced AND/OR/NOT logic, WYSIWYG email editor, A/B/C subject line testing, numeric range routing
 - **v0.2.1** (Bug Fixes & UX): Fixed Vite EBUSY errors by moving cache to system temp, added quick "Manage" button in email template section
 - **v0.3.0** (Phase 3 - Testing & Validation): Survey testing modal with real-time path evaluation, path validation warnings (per-path & unmapped options), "Other" text input for survey options, comprehensive campaign flow validation with graph analysis, clickable validation issues to open nodes, visual selection indicators (colored rings) on all node types
+- **v0.4.0** (Phase 4 - UX Polish): Toast notifications system (react-hot-toast), replaced all 14 browser alert() dialogs with modern, non-blocking toasts for save/load/export/error feedback
 
 ---
 
@@ -777,6 +800,6 @@ npm run dev
 
 ---
 
-**Last Updated**: 2025-10-24 (v0.3.0 - Phase 3 Complete: Testing & Validation + Visual Selection Indicators)
+**Last Updated**: 2025-10-24 (v0.4.0 - Phase 4 Started: Toast Notifications System)
 **Project**: Campaign Builder
-**Status**: Active Development - Phase 3 Complete
+**Status**: Active Development - Phase 4 In Progress

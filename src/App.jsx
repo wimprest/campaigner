@@ -23,6 +23,7 @@ import DelayNode from './components/nodes/DelayNode'
 import { exportCampaignJSON, exportAllEmailsAsZip, exportAsInteractiveHTML } from './utils/exportUtils'
 import { loadTemplate } from './utils/campaignTemplates'
 import { validateCampaign } from './utils/campaignValidation'
+import toast, { Toaster } from 'react-hot-toast'
 
 // Define custom node types
 const nodeTypes = {
@@ -268,7 +269,7 @@ function FlowBuilder() {
       edges,
     }
     localStorage.setItem('campaign-flow', JSON.stringify(flowData))
-    alert('Campaign saved successfully!')
+    toast.success('Campaign saved successfully!')
   }, [campaignName, nodes, edges])
 
   const loadFromLocalStorage = useCallback(() => {
@@ -279,9 +280,9 @@ function FlowBuilder() {
       setNodes(flowData.nodes || [])
       setEdges(flowData.edges || [])
       updateIdCounter(flowData.nodes || [])
-      alert('Campaign loaded successfully!')
+      toast.success('Campaign loaded successfully!')
     } else {
-      alert('No saved campaign found!')
+      toast.error('No saved campaign found!')
     }
   }, [setNodes, setEdges])
 
@@ -310,13 +311,13 @@ function FlowBuilder() {
           setNodes(importedData.nodes)
           setEdges(importedData.edges)
           updateIdCounter(importedData.nodes)
-          alert('Campaign imported successfully!')
+          toast.success('Campaign imported successfully!')
         } else {
-          alert('Invalid campaign file format')
+          toast.error('Invalid campaign file format')
         }
       } catch (error) {
         console.error('Import error:', error)
-        alert('Error importing campaign: ' + error.message)
+        toast.error('Error importing campaign: ' + error.message)
       }
     }
     reader.readAsText(file)
@@ -328,9 +329,9 @@ function FlowBuilder() {
       setNodes(templateData.nodes)
       setEdges(templateData.edges)
       updateIdCounter(templateData.nodes)
-      alert('Template loaded successfully!')
+      toast.success('Template loaded successfully!')
     } else {
-      alert('Failed to load template')
+      toast.error('Failed to load template')
     }
   }, [setNodes, setEdges])
 
@@ -545,6 +546,30 @@ function FlowBuilder() {
 function App() {
   return (
     <ReactFlowProvider>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            duration: 3000,
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            duration: 4000,
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
       <FlowBuilder />
     </ReactFlowProvider>
   )

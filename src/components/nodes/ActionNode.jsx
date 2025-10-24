@@ -5,7 +5,7 @@ import { Zap } from 'lucide-react'
 export default function ActionNode({ data, selected }) {
   return (
     <div className={`bg-white rounded-lg shadow-md border-2 transition-all ${
-      selected ? 'border-orange-500 ring-4 ring-orange-500 ring-opacity-50 shadow-xl scale-105' : 'border-orange-300'
+      selected ? 'border-orange-500 ring-8 ring-orange-500 ring-opacity-75 shadow-2xl scale-105' : 'border-orange-300'
     } min-w-[200px] max-w-[250px]`}>
       <Handle type="target" position={Position.Top} className="w-3 h-3" />
 

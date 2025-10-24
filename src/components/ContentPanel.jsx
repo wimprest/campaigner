@@ -6,6 +6,7 @@ import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import EmailEditorModal from './EmailEditorModal'
 import SurveyTestModal from './SurveyTestModal'
+import toast from 'react-hot-toast'
 
 export default function ContentPanel({ node, onUpdate, onClose, onDelete }) {
   const [localData, setLocalData] = useState(node.data)
@@ -32,7 +33,7 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete }) {
 
   const handleSave = () => {
     onUpdate(node.id, localData)
-    alert('Node updated successfully!')
+    toast.success('Node updated successfully!')
   }
 
   const handleDelete = () => {

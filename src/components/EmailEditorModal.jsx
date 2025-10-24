@@ -11,6 +11,7 @@ import {
 } from '../utils/emailTemplates'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
+import toast from 'react-hot-toast'
 
 export default function EmailEditorModal({ isOpen, node, onSave, onClose }) {
   const [localData, setLocalData] = useState(node.data)
@@ -160,7 +161,7 @@ export default function EmailEditorModal({ isOpen, node, onSave, onClose }) {
 
   const handleSaveTemplate = () => {
     if (!templateForm.key || !templateForm.name) {
-      alert('Template key and name are required')
+      toast.error('Template key and name are required')
       return
     }
 
@@ -191,7 +192,7 @@ export default function EmailEditorModal({ isOpen, node, onSave, onClose }) {
     if (editingTemplate === 'new') {
       // Check if key already exists
       if (getTemplate(templateForm.key)) {
-        alert('A template with this key already exists')
+        toast.error('A template with this key already exists')
         return
       }
       addCustomTemplate(templateForm.key, templateData)
@@ -207,7 +208,7 @@ export default function EmailEditorModal({ isOpen, node, onSave, onClose }) {
 
   const handleDeleteTemplate = (templateKey) => {
     if (!isCustomTemplate(templateKey)) {
-      alert('Cannot delete default templates. You can only delete custom templates.')
+      toast.error('Cannot delete default templates. You can only delete custom templates.')
       return
     }
 
