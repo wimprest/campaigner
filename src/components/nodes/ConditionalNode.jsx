@@ -4,8 +4,8 @@ import { GitBranch } from 'lucide-react'
 
 export default function ConditionalNode({ data, selected }) {
   return (
-    <div className={`bg-white rounded-lg shadow-md border-2 ${
-      selected ? 'border-purple-500' : 'border-purple-300'
+    <div className={`bg-white rounded-lg shadow-md border-2 transition-all ${
+      selected ? 'border-purple-500 ring-4 ring-purple-500 ring-opacity-50 shadow-xl scale-105' : 'border-purple-300'
     } min-w-[200px] max-w-[250px]`}>
       <Handle type="target" position={Position.Top} className="w-3 h-3" />
 

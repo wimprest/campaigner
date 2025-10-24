@@ -55,12 +55,13 @@ campaign/
 └── claude.md                    # This file
 ```
 
-## Current Features (Phase 2)
+## Current Features (Phase 2 & 3)
 
 ### 1. Flowchart Builder
 - **Drag-and-drop** node creation from sidebar
 - **5 node types**: Email, Survey, Conditional, Action, Delay
 - **Visual connections** with colored paths and labels
+- **Visual selection indicators** - Selected nodes display prominent colored ring, elevated shadow, and zoom effect for easy identification ⭐ NEW
 - **Mini-map** for navigation of large campaigns
 - **Pan & zoom** controls
 
@@ -285,6 +286,26 @@ campaign/
   - Dynamic output handles (one per path)
   - Visual badges: 🎯 for score routing, 🧠 for advanced rules
   - Handle positioning calculated by `getHandlePosition()`
+  - Green ring selection indicator when node is being edited
+
+### Node Components (EmailNode, ConditionalNode, ActionNode, DelayNode) ⭐ PHASE 3 UX
+- **Visual Selection Indicators**: All 5 custom node components now display prominent visual feedback when selected
+- **Implementation**: Uses React Flow's `selected` prop (automatically passed to custom nodes)
+- **Styling**: Each node type uses its own thematic color for selection effects:
+  - EmailNode: Blue ring (`ring-blue-500`)
+  - SurveyNode: Green ring (`ring-green-500`)
+  - ConditionalNode: Purple ring (`ring-purple-500`)
+  - ActionNode: Orange ring (`ring-orange-500`)
+  - DelayNode: Red ring (`ring-red-500`)
+- **Effects applied**:
+  - `ring-4 ring-{color}-500 ring-opacity-50` - Colored ring around node
+  - `shadow-xl` - Elevated shadow for depth
+  - `scale-105` - 5% zoom effect
+  - `transition-all` - Smooth transitions between states
+- **Use case**: Makes it immediately obvious which node is being edited in ContentPanel, especially useful for:
+  - Large campaigns with many nodes
+  - When clicking validation issues that open nodes for editing
+  - Quick visual feedback during node navigation
 
 ## Development Patterns & Conventions
 
@@ -714,7 +735,7 @@ To add debug logging (optional future feature):
 - **v0.1** (Phase 1): Basic flowchart, 5 node types, save/load, simple surveys
 - **v0.2** (Phase 2): Multi-question surveys, score-based routing, advanced AND/OR/NOT logic, WYSIWYG email editor, A/B/C subject line testing, numeric range routing
 - **v0.2.1** (Bug Fixes & UX): Fixed Vite EBUSY errors by moving cache to system temp, added quick "Manage" button in email template section
-- **v0.3.0** (Phase 3 - Testing & Validation): Survey testing modal with real-time path evaluation, path validation warnings (per-path & unmapped options), "Other" text input for survey options, comprehensive campaign flow validation with graph analysis
+- **v0.3.0** (Phase 3 - Testing & Validation): Survey testing modal with real-time path evaluation, path validation warnings (per-path & unmapped options), "Other" text input for survey options, comprehensive campaign flow validation with graph analysis, clickable validation issues to open nodes, visual selection indicators (colored rings) on all node types
 
 ---
 
@@ -756,6 +777,6 @@ npm run dev
 
 ---
 
-**Last Updated**: 2025-10-24 (v0.3.0 - Phase 3 Complete: Testing & Validation)
+**Last Updated**: 2025-10-24 (v0.3.0 - Phase 3 Complete: Testing & Validation + Visual Selection Indicators)
 **Project**: Campaign Builder
 **Status**: Active Development - Phase 3 Complete

@@ -27,8 +27,8 @@ export default function SurveyNode({ data, selected }) {
   }
 
   return (
-    <div className={`bg-white rounded-lg shadow-md border-2 ${
-      selected ? 'border-green-500' : 'border-green-300'
+    <div className={`bg-white rounded-lg shadow-md border-2 transition-all ${
+      selected ? 'border-green-500 ring-4 ring-green-500 ring-opacity-50 shadow-xl scale-105' : 'border-green-300'
     } min-w-[220px] max-w-[280px]`}>
       <Handle type="target" position={Position.Top} className="w-3 h-3" />
 
