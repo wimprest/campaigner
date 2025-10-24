@@ -1,20 +1,34 @@
 import React, { useState, useEffect } from 'react'
-import { X, Plus, Trash, Mail, ChevronDown, ChevronUp, Maximize2, Settings } from 'lucide-react'
+import { X, Plus, Trash, Mail, ChevronDown, ChevronUp, Maximize2, Settings, Play, AlertTriangle } from 'lucide-react'
 import { emailTemplates, getTemplateList } from '../utils/emailTemplates'
+import { validateSurvey } from '../utils/surveyLogic'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import EmailEditorModal from './EmailEditorModal'
+import SurveyTestModal from './SurveyTestModal'
 
 export default function ContentPanel({ node, onUpdate, onClose, onDelete }) {
   const [localData, setLocalData] = useState(node.data)
   const [expandedQuestions, setExpandedQuestions] = useState(new Set())
   const [emailEditMode, setEmailEditMode] = useState('visual')
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
+  const [isSurveyTestModalOpen, setIsSurveyTestModalOpen] = useState(false)
   const [activeSubjectVariant, setActiveSubjectVariant] = useState('A')
+  const [pathValidationWarnings, setPathValidationWarnings] = useState({})
+  const [surveyValidationWarnings, setSurveyValidationWarnings] = useState([])
 
   useEffect(() => {
     setLocalData(node.data)
   }, [node])
+
+  // Run validation whenever survey data changes
+  useEffect(() => {
+    if (node.type === 'survey' && localData.questions && localData.responsePaths) {
+      const validation = validateSurvey(localData.responsePaths, localData.questions)
+      setPathValidationWarnings(validation.pathWarnings)
+      setSurveyValidationWarnings(validation.surveyWarnings)
+    }
+  }, [node.type, localData.questions, localData.responsePaths])
 
   const handleSave = () => {
     onUpdate(node.id, localData)
@@ -89,7 +103,8 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete }) {
         const newOption = {
           id: `${questionId}_opt_${Date.now()}`,
           text: `Option ${(q.responseOptions?.length || 0) + 1}`,
-          points: 0
+          points: 0,
+          allowsTextInput: false
         }
         return {
           ...q,
@@ -727,24 +742,37 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete }) {
                                   )
 
                                   return (
-                                    <div key={option.id} className="flex items-center space-x-1.5">
-                                      <input
-                                        type="text"
-                                        value={option.text}
-                                        onChange={(e) => updateSurveyOption(question.id, option.id, 'text', e.target.value)}
-                                        className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500 focus:border-green-500"
-                                        placeholder="Option text"
-                                      />
-                                      <div className="flex items-center space-x-1">
-                                        <input
-                                          type="number"
-                                          value={option.points || 0}
-                                          onChange={(e) => updateSurveyOption(question.id, option.id, 'points', parseInt(e.target.value) || 0)}
-                                          className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500 focus:border-green-500 text-center"
-                                          placeholder="pts"
-                                          title="Point value"
-                                        />
-                                        <span className="text-xs text-gray-500">pts</span>
+                                    <div key={option.id} className="flex items-start space-x-1.5">
+                                      <div className="flex-1 space-y-1">
+                                        <div className="flex items-center space-x-1.5">
+                                          <input
+                                            type="text"
+                                            value={option.text}
+                                            onChange={(e) => updateSurveyOption(question.id, option.id, 'text', e.target.value)}
+                                            className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                                            placeholder="Option text"
+                                          />
+                                          <div className="flex items-center space-x-1">
+                                            <input
+                                              type="number"
+                                              value={option.points || 0}
+                                              onChange={(e) => updateSurveyOption(question.id, option.id, 'points', parseInt(e.target.value) || 0)}
+                                              className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500 focus:border-green-500 text-center"
+                                              placeholder="pts"
+                                              title="Point value"
+                                            />
+                                            <span className="text-xs text-gray-500">pts</span>
+                                          </div>
+                                        </div>
+                                        <label className="flex items-center space-x-2 text-xs text-gray-600 cursor-pointer ml-2">
+                                          <input
+                                            type="checkbox"
+                                            checked={option.allowsTextInput || false}
+                                            onChange={(e) => updateSurveyOption(question.id, option.id, 'allowsTextInput', e.target.checked)}
+                                            className="w-3.5 h-3.5 text-green-600 rounded"
+                                          />
+                                          <span>Allow text input (e.g., "Other, please specify")</span>
+                                        </label>
                                       </div>
                                       {mappedPath && (
                                         <div
@@ -827,16 +855,34 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete }) {
             {/* Response Paths */}
             <div className="border-t pt-4">
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Response Paths (Outcomes)
-                </label>
-                <button
-                  onClick={addResponsePath}
-                  className="flex items-center text-xs text-blue-600 hover:text-blue-700"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add Path
-                </button>
+                <div className="flex items-center space-x-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Response Paths (Outcomes)
+                  </label>
+                  {(Object.keys(pathValidationWarnings).length > 0 || surveyValidationWarnings.length > 0) && (
+                    <span className="inline-flex items-center px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                      <AlertTriangle className="w-3 h-3 mr-1" />
+                      {Object.keys(pathValidationWarnings).length + (surveyValidationWarnings.length > 0 ? 1 : 0)} issue{(Object.keys(pathValidationWarnings).length + (surveyValidationWarnings.length > 0 ? 1 : 0)) === 1 ? '' : 's'}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setIsSurveyTestModalOpen(true)}
+                    className="flex items-center px-3 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+                    title="Test this survey with sample responses"
+                  >
+                    <Play className="w-3.5 h-3.5 mr-1" />
+                    Test Survey
+                  </button>
+                  <button
+                    onClick={addResponsePath}
+                    className="flex items-center text-xs text-blue-600 hover:text-blue-700"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Path
+                  </button>
+                </div>
               </div>
 
               {/* Score Range Preview */}
@@ -857,6 +903,30 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete }) {
               {allResponseOptions.length === 0 && (
                 <div className="text-xs text-gray-600 bg-yellow-50 p-3 rounded mb-3">
                   Add questions with response options above to create path mappings.
+                </div>
+              )}
+
+              {/* Survey-Level Warnings (Unmapped Options) */}
+              {surveyValidationWarnings.length > 0 && (
+                <div className="mb-3 bg-orange-50 border border-orange-300 rounded-lg p-3">
+                  <div className="flex items-start space-x-2">
+                    <AlertTriangle className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <div className="text-xs font-semibold text-orange-800 mb-2">
+                        Unmapped Response Options
+                      </div>
+                      <ul className="space-y-1.5">
+                        {surveyValidationWarnings.map((warning, idx) => (
+                          <li key={idx} className="text-xs text-orange-700 leading-relaxed">
+                            • {warning}
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="mt-2 text-xs text-orange-600 italic">
+                        These options won't route to any path. Map them below or remove them.
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -890,6 +960,27 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete }) {
                         </button>
                       )}
                     </div>
+
+                    {/* Validation Warnings */}
+                    {pathValidationWarnings[path.id] && pathValidationWarnings[path.id].length > 0 && (
+                      <div className="mb-3 bg-yellow-50 border border-yellow-300 rounded-lg p-3">
+                        <div className="flex items-start space-x-2">
+                          <AlertTriangle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                          <div className="flex-1">
+                            <div className="text-xs font-semibold text-yellow-800 mb-1">
+                              Configuration Warnings
+                            </div>
+                            <ul className="space-y-1">
+                              {pathValidationWarnings[path.id].map((warning, idx) => (
+                                <li key={idx} className="text-xs text-yellow-700 leading-relaxed">
+                                  • {warning}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Score Threshold Inputs */}
                     {(minScore !== 0 || maxScore !== 0) && (
@@ -1482,6 +1573,15 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete }) {
           node={{ ...node, data: localData }}
           onSave={handleEmailModalSave}
           onClose={() => setIsEmailModalOpen(false)}
+        />
+      )}
+
+      {/* Survey Test Modal */}
+      {node.type === 'survey' && (
+        <SurveyTestModal
+          isOpen={isSurveyTestModalOpen}
+          surveyData={localData}
+          onClose={() => setIsSurveyTestModalOpen(false)}
         />
       )}
     </>

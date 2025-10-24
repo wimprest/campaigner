@@ -14,6 +14,7 @@ import 'reactflow/dist/style.css'
 import Sidebar from './components/Sidebar'
 import TopBar from './components/TopBar'
 import ContentPanel from './components/ContentPanel'
+import ValidationPanel from './components/ValidationPanel'
 import EmailNode from './components/nodes/EmailNode'
 import SurveyNode from './components/nodes/SurveyNode'
 import ConditionalNode from './components/nodes/ConditionalNode'
@@ -21,6 +22,7 @@ import ActionNode from './components/nodes/ActionNode'
 import DelayNode from './components/nodes/DelayNode'
 import { exportCampaignJSON, exportAllEmailsAsZip, exportAsInteractiveHTML } from './utils/exportUtils'
 import { loadTemplate } from './utils/campaignTemplates'
+import { validateCampaign } from './utils/campaignValidation'
 
 // Define custom node types
 const nodeTypes = {
@@ -66,6 +68,10 @@ function FlowBuilder() {
   // History for undo/redo
   const [history, setHistory] = useState([{ nodes: [], edges: [] }])
   const [historyIndex, setHistoryIndex] = useState(0)
+
+  // Validation panel
+  const [isValidationPanelOpen, setIsValidationPanelOpen] = useState(false)
+  const [validationResults, setValidationResults] = useState(null)
 
   const onConnect = useCallback(
     (params) => {
@@ -160,8 +166,8 @@ function FlowBuilder() {
               text: '',
               questionType: 'radio', // radio, text, range, checkbox
               responseOptions: [
-                { id: 'q_1_opt_1', text: 'Option 1', points: 0 },
-                { id: 'q_1_opt_2', text: 'Option 2', points: 0 }
+                { id: 'q_1_opt_1', text: 'Option 1', points: 0, allowsTextInput: false },
+                { id: 'q_1_opt_2', text: 'Option 2', points: 0, allowsTextInput: false }
               ]
             }
           ],
@@ -338,6 +344,20 @@ function FlowBuilder() {
     }
   }, [setNodes, setEdges])
 
+  const handleValidateCampaign = useCallback(() => {
+    const results = validateCampaign(nodes, edges)
+    setValidationResults(results)
+    setIsValidationPanelOpen(true)
+  }, [nodes, edges])
+
+  const handleValidationIssueClick = useCallback((nodeId) => {
+    const node = nodes.find(n => n.id === nodeId)
+    if (node) {
+      setSelectedNode(node)
+      setIsValidationPanelOpen(false)
+    }
+  }, [nodes])
+
   // Save current state to history
   const saveToHistory = useCallback((newNodes, newEdges) => {
     setHistory((prev) => {
@@ -452,6 +472,7 @@ function FlowBuilder() {
         onExportEmails={handleExportEmails}
         onExportHTML={handleExportHTML}
         onClear={clearCanvas}
+        onValidate={handleValidateCampaign}
       />
       <div className="flex-1 flex overflow-hidden">
         <Sidebar />
@@ -509,6 +530,14 @@ function FlowBuilder() {
           />
         )}
       </div>
+      {validationResults && (
+        <ValidationPanel
+          isOpen={isValidationPanelOpen}
+          onClose={() => setIsValidationPanelOpen(false)}
+          validationResults={validationResults}
+          onIssueClick={handleValidationIssueClick}
+        />
+      )}
     </div>
   )
 }

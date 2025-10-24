@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { Save, Upload, Download, Trash2, ChevronDown, FileJson, Mail, Globe, FolderOpen } from 'lucide-react'
+import { Save, Upload, Download, Trash2, ChevronDown, FileJson, Mail, Globe, FolderOpen, CheckCircle } from 'lucide-react'
 
 export default function TopBar({
   campaignName,
@@ -11,7 +11,8 @@ export default function TopBar({
   onExportJSON,
   onExportEmails,
   onExportHTML,
-  onClear
+  onClear,
+  onValidate
 }) {
   const [showExportMenu, setShowExportMenu] = useState(false)
   const [showLoadMenu, setShowLoadMenu] = useState(false)
@@ -44,8 +45,8 @@ export default function TopBar({
       <div className="flex items-center space-x-4">
         <div className="flex items-center">
           <h1 className="text-xl font-bold text-gray-900">Campaign Builder</h1>
-          <span className="ml-3 px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
-            Phase 2
+          <span className="ml-3 px-2 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded">
+            Phase 3
           </span>
         </div>
         <div className="flex items-center">
@@ -216,6 +217,15 @@ export default function TopBar({
             </>
           )}
         </div>
+
+        <button
+          onClick={onValidate}
+          className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+          title="Validate campaign structure and content"
+        >
+          <CheckCircle className="w-4 h-4 mr-2" />
+          Validate
+        </button>
 
         <button
           onClick={onClear}

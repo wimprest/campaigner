@@ -234,6 +234,71 @@ export function validatePathConfiguration(path, questions) {
 }
 
 /**
+ * Check for response options that aren't mapped to any path
+ * @param {Array} questions - Survey questions
+ * @param {Array} responsePaths - Array of response paths
+ * @returns {Array} Array of unmapped option warnings
+ */
+export function findUnmappedOptions(questions, responsePaths) {
+  const warnings = []
+
+  questions.forEach((question) => {
+    if (question.questionType !== 'radio' && question.questionType !== 'checkbox') {
+      return // Skip text and range questions
+    }
+
+    const options = question.responseOptions || []
+    const unmappedOptions = []
+
+    options.forEach((option) => {
+      let isMapped = false
+
+      // Check if option is mapped in ANY path
+      responsePaths.forEach((path) => {
+        // Check simple mapping
+        if (path.mappedOptions?.includes(option.id)) {
+          isMapped = true
+        }
+
+        // Check advanced rules
+        if (path.advancedRules?.enabled) {
+          const { requireAll = [], requireAny = [], requireNone = [] } = path.advancedRules
+          if (requireAll.includes(option.id) ||
+              requireAny.includes(option.id) ||
+              requireNone.includes(option.id)) {
+            isMapped = true
+          }
+        }
+
+        // Check if option has points (contributes to score routing)
+        // Note: Zero points still counts as "participating" in score routing
+        if (option.points !== undefined && option.points !== null) {
+          // If ANY path uses score routing, this option is considered mapped
+          const hasScoreThresholds = (path.scoreMin !== null && path.scoreMin !== undefined) ||
+                                      (path.scoreMax !== null && path.scoreMax !== undefined)
+          if (hasScoreThresholds) {
+            isMapped = true
+          }
+        }
+      })
+
+      if (!isMapped) {
+        unmappedOptions.push(option.text || option.id)
+      }
+    })
+
+    if (unmappedOptions.length > 0) {
+      const optionList = unmappedOptions.map(opt => `"${opt}"`).join(', ')
+      warnings.push(
+        `Question "${question.text || 'Untitled'}" has ${unmappedOptions.length} option(s) not mapped to any path: ${optionList}`
+      )
+    }
+  })
+
+  return warnings
+}
+
+/**
  * Get all validation warnings for all paths in a survey
  * @param {Array} responsePaths - Array of response paths
  * @param {Array} questions - Survey questions
@@ -250,6 +315,19 @@ export function validateAllPaths(responsePaths, questions) {
   })
 
   return validationResults
+}
+
+/**
+ * Get comprehensive survey validation including paths and unmapped options
+ * @param {Array} responsePaths - Array of response paths
+ * @param {Array} questions - Survey questions
+ * @returns {Object} Object with path warnings and survey-level warnings
+ */
+export function validateSurvey(responsePaths, questions) {
+  return {
+    pathWarnings: validateAllPaths(responsePaths, questions),
+    surveyWarnings: findUnmappedOptions(questions, responsePaths)
+  }
 }
 
 /**
