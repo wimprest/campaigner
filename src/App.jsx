@@ -359,6 +359,136 @@ function FlowBuilder() {
     }
   }, [nodes])
 
+  // Duplicate a node
+  const handleDuplicateNode = useCallback((nodeId) => {
+    const nodeToDuplicate = nodes.find(n => n.id === nodeId)
+    if (!nodeToDuplicate) {
+      toast.error('Node not found!')
+      return
+    }
+
+    // Deep clone the node data
+    const clonedData = JSON.parse(JSON.stringify(nodeToDuplicate.data))
+
+    // Generate new IDs for nested items (for survey nodes)
+    if (nodeToDuplicate.type === 'survey' && clonedData.questions) {
+      // Generate new IDs for questions and their options
+      clonedData.questions = clonedData.questions.map(q => {
+        const newQuestionId = `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        const newOptions = q.responseOptions?.map(opt => ({
+          ...opt,
+          id: `${newQuestionId}_opt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        }))
+        return {
+          ...q,
+          id: newQuestionId,
+          responseOptions: newOptions || []
+        }
+      })
+
+      // Generate new IDs for response paths and update their mappedOptions
+      if (clonedData.responsePaths) {
+        const oldToNewQuestionIds = {}
+        nodeToDuplicate.data.questions?.forEach((oldQ, idx) => {
+          oldToNewQuestionIds[oldQ.id] = clonedData.questions[idx].id
+        })
+
+        clonedData.responsePaths = clonedData.responsePaths.map(path => {
+          const newPathId = `path_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+          // Update mapped options to use new question/option IDs
+          const newMappedOptions = path.mappedOptions?.map(oldOptId => {
+            // Find which question this option belongs to
+            for (const oldQ of nodeToDuplicate.data.questions || []) {
+              const optionIndex = oldQ.responseOptions?.findIndex(opt => opt.id === oldOptId)
+              if (optionIndex !== -1) {
+                const newQ = clonedData.questions.find(q =>
+                  q.text === oldQ.text && q.questionType === oldQ.questionType
+                )
+                if (newQ && newQ.responseOptions && newQ.responseOptions[optionIndex]) {
+                  return newQ.responseOptions[optionIndex].id
+                }
+              }
+            }
+            return oldOptId // Fallback
+          })
+
+          // Update range conditions to use new question IDs
+          const newRangeConditions = path.rangeConditions?.map(cond => ({
+            ...cond,
+            id: `range_cond_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            questionId: oldToNewQuestionIds[cond.questionId] || cond.questionId
+          }))
+
+          // Update advanced rules to use new option IDs
+          const newAdvancedRules = path.advancedRules ? {
+            ...path.advancedRules,
+            requireAll: path.advancedRules.requireAll?.map(oldOptId => {
+              const newOptId = newMappedOptions?.find((newOpt, idx) =>
+                path.mappedOptions?.[idx] === oldOptId
+              )
+              return newOptId || oldOptId
+            }),
+            requireAny: path.advancedRules.requireAny?.map(oldOptId => {
+              const newOptId = newMappedOptions?.find((newOpt, idx) =>
+                path.mappedOptions?.[idx] === oldOptId
+              )
+              return newOptId || oldOptId
+            }),
+            requireNone: path.advancedRules.requireNone?.map(oldOptId => {
+              const newOptId = newMappedOptions?.find((newOpt, idx) =>
+                path.mappedOptions?.[idx] === oldOptId
+              )
+              return newOptId || oldOptId
+            })
+          } : path.advancedRules
+
+          return {
+            ...path,
+            id: newPathId,
+            mappedOptions: newMappedOptions || [],
+            rangeConditions: newRangeConditions || [],
+            advancedRules: newAdvancedRules
+          }
+        })
+      }
+    }
+
+    // Generate new IDs for email subject variants
+    if (nodeToDuplicate.type === 'email' && clonedData.subjectVariants) {
+      clonedData.subjectVariants = clonedData.subjectVariants.map(variant => ({
+        ...variant
+        // Keep same IDs (A, B, C) for variants, just copy the data
+      }))
+    }
+
+    // Update label to indicate it's a copy
+    if (clonedData.label) {
+      clonedData.label = `${clonedData.label} (Copy)`
+    }
+
+    // Create new node with offset position
+    const newNode = {
+      ...nodeToDuplicate,
+      id: `node_${id++}`,
+      position: {
+        x: nodeToDuplicate.position.x + 50,
+        y: nodeToDuplicate.position.y + 50
+      },
+      data: clonedData,
+      selected: false
+    }
+
+    // Add the new node
+    setNodes((nds) => [...nds, newNode])
+
+    // Save to history
+    const newNodes = [...nodes, newNode]
+    saveToHistory(newNodes, edges)
+
+    toast.success(`Node duplicated: ${clonedData.label || nodeToDuplicate.type}`)
+  }, [nodes, edges, setNodes])
+
   // Save current state to history
   const saveToHistory = useCallback((newNodes, newEdges) => {
     setHistory((prev) => {
@@ -441,13 +571,21 @@ function FlowBuilder() {
         event.preventDefault()
         redo()
       }
+
+      // Ctrl+D or Cmd+D - Duplicate selected node
+      if ((event.ctrlKey || event.metaKey) && event.key === 'd' && !isTyping) {
+        event.preventDefault()
+        if (selectedNode) {
+          handleDuplicateNode(selectedNode.id)
+        }
+      }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [selectedNode, selectedEdge, deleteNode, deleteEdge, undo, redo])
+  }, [selectedNode, selectedEdge, deleteNode, deleteEdge, undo, redo, handleDuplicateNode])
 
   // Save to history when nodes or edges change
   useEffect(() => {
@@ -528,6 +666,7 @@ function FlowBuilder() {
             onUpdate={updateNodeData}
             onClose={() => setSelectedNode(null)}
             onDelete={deleteNode}
+            onDuplicate={handleDuplicateNode}
           />
         )}
       </div>

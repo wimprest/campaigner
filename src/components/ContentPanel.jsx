@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { X, Plus, Trash, Mail, ChevronDown, ChevronUp, Maximize2, Settings, Play, AlertTriangle } from 'lucide-react'
+import { X, Plus, Trash, Mail, ChevronDown, ChevronUp, Maximize2, Settings, Play, AlertTriangle, Copy } from 'lucide-react'
 import { emailTemplates, getTemplateList } from '../utils/emailTemplates'
 import { validateSurvey } from '../utils/surveyLogic'
 import ReactQuill from 'react-quill'
@@ -8,7 +8,7 @@ import EmailEditorModal from './EmailEditorModal'
 import SurveyTestModal from './SurveyTestModal'
 import toast from 'react-hot-toast'
 
-export default function ContentPanel({ node, onUpdate, onClose, onDelete }) {
+export default function ContentPanel({ node, onUpdate, onClose, onDelete, onDuplicate }) {
   const [localData, setLocalData] = useState(node.data)
   const [expandedQuestions, setExpandedQuestions] = useState(new Set())
   const [emailEditMode, setEmailEditMode] = useState('visual')
@@ -40,6 +40,11 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete }) {
     if (window.confirm('Are you sure you want to delete this node?')) {
       onDelete(node.id)
     }
+  }
+
+  const handleDuplicate = () => {
+    onDuplicate(node.id)
+    onClose() // Close the panel after duplicating
   }
 
   const handleEmailModalSave = (updatedData) => {
@@ -1555,6 +1560,13 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete }) {
             Save Changes
           </button>
           <button
+            onClick={handleDuplicate}
+            className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center"
+          >
+            <Copy className="w-4 h-4 mr-2" />
+            Duplicate Node
+          </button>
+          <button
             onClick={handleDelete}
             className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center justify-center"
           >
@@ -1562,7 +1574,7 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete }) {
             Delete Node
           </button>
           <p className="text-xs text-gray-500 text-center mt-2">
-            Tip: Press Delete or Backspace to delete selected node
+            Tip: Press Ctrl+D to duplicate • Delete/Backspace to delete
           </p>
         </div>
       </div>

@@ -474,9 +474,18 @@ campaign/
 - Non-blocking, can show multiple toasts
 - Custom duration for longer messages (5s for MJML export instructions)
 
-#### 2. Node Duplication
-**Feature**: Right-click menu or Ctrl+D to duplicate nodes
-**Use case**: Create similar emails or surveys quickly
+#### 2. Node Duplication ✅ COMPLETE
+**Features**:
+- Duplicate button in ContentPanel (green button between Save and Delete)
+- Keyboard shortcut: **Ctrl+D** (Windows/Linux) or **Cmd+D** (Mac)
+- Deep clone of all node data including complex structures
+- Smart ID regeneration for survey questions, options, paths, and rules
+- Label automatically updated with "(Copy)" suffix
+- Offset positioning (+50px x, +50px y) for easy identification
+- Toast notification confirms duplication
+- Works with all 5 node types
+**Use case**: Quickly create similar emails or surveys without rebuilding from scratch
+**Implementation**: 130-line duplicate function in App.jsx handles complex ID remapping for survey nodes
 
 #### 3. Bulk Operations
 **Features**:
@@ -759,6 +768,7 @@ To add debug logging (optional future feature):
 - **v0.2.1** (Bug Fixes & UX): Fixed Vite EBUSY errors by moving cache to system temp, added quick "Manage" button in email template section
 - **v0.3.0** (Phase 3 - Testing & Validation): Survey testing modal with real-time path evaluation, path validation warnings (per-path & unmapped options), "Other" text input for survey options, comprehensive campaign flow validation with graph analysis, clickable validation issues to open nodes, visual selection indicators (colored rings) on all node types
 - **v0.4.0** (Phase 4 - UX Polish): Toast notifications system (react-hot-toast), replaced all 14 browser alert() dialogs with modern, non-blocking toasts for save/load/export/error feedback
+- **v0.4.1** (Phase 4 - Node Duplication): One-click node duplication with Duplicate button and Ctrl+D/Cmd+D shortcut, smart ID regeneration for complex survey nodes, automatic label updating with "(Copy)" suffix
 
 ---
 
@@ -800,6 +810,6 @@ npm run dev
 
 ---
 
-**Last Updated**: 2025-10-24 (v0.4.0 - Phase 4 Started: Toast Notifications System)
+**Last Updated**: 2025-10-24 (v0.4.1 - Phase 4: Toast Notifications + Node Duplication)
 **Project**: Campaign Builder
-**Status**: Active Development - Phase 4 In Progress
+**Status**: Active Development - Phase 4: 2 of 5 features complete
