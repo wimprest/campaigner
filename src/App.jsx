@@ -868,6 +868,7 @@ function FlowBuilder() {
 
               return {
                 ...node,
+                selected: node.selected, // Preserve selection state for validation highlighting
                 style: {
                   ...node.style,
                   opacity: hasActiveFilter && !matches ? 0.2 : 1,
