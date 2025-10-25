@@ -6,7 +6,7 @@ A visual, drag-and-drop marketing campaign builder built with React and React Fl
 
 **Target Users**: Marketing teams, campaign managers, and automation specialists who need to design complex customer journeys without coding.
 
-**Current Phase**: Phase 4 In Progress - UX Polish & Professional Features (Toast Notifications, Node Duplication, Bulk Operations complete)
+**Current Phase**: Phase 6 Complete - Email Variables & Personalization (v0.8.0)
 
 ## Tech Stack
 
@@ -45,8 +45,9 @@ campaign/
 │   │   ├── BulkEmailImportDialog.jsx  # Bulk email import with preview
 │   │   ├── SingleEmailImportDialog.jsx # Single email import for node updates
 │   │   ├── VersionHistoryPanel.jsx    # Version history management panel
+│   │   ├── VariablesManager.jsx # Campaign variables manager modal
 │   │   ├── Sidebar.jsx          # Left-side node palette
-│   │   └── TopBar.jsx           # Save/Load/Export/Versions menu
+│   │   └── TopBar.jsx           # Save/Load/Export/Versions/Variables menu
 │   ├── utils/
 │   │   ├── exportUtils.js       # JSON/HTML/ZIP export functions
 │   │   ├── emailParser.js       # Email text format parser (bulk & single import)
@@ -76,13 +77,23 @@ campaign/
   - Blank, Welcome, Announcement, Survey, Promotional, Re-engagement
 - **WYSIWYG editor** (ReactQuill) with Visual/Code toggle
 - **Rich text formatting**: Headers, bold, italic, lists, colors, links, images
-- **A/B/C Subject Line Testing** ⭐ NEW
+- **A/B/C Subject Line Testing** ⭐ NEW (v0.2.0)
   - Create 3 subject line variants (A, B, C)
   - Configure split percentages for each variant (default: 33/33/34%)
   - Color-coded tabbed interface (blue/green/purple)
   - Visual badge on nodes showing test status (e.g., "A/B/C Test 2/3")
   - Industry best practice: 1,500+ recipients per variant
-- **Variable support**: `{{ firstName }}`, `{{ ctaLink }}`
+- **Campaign Variables System** ⭐ NEW (v0.8.0)
+  - Define campaign-level variables with name, default value, and description
+  - **Insert Variable** dropdown in email editor (ContentPanel & EmailEditorModal)
+  - Click-to-insert variables at cursor position: `{{ firstName }}`, `{{ company }}`
+  - 8 common preset variables (firstName, lastName, email, company, phone, jobTitle, city, country)
+  - **Preview mode** - See emails with variables replaced by default values
+  - Purple-themed preview panel with Eye icon toggle
+  - Variable validation (unique names, alphanumeric + underscore)
+  - Teal "Variables" button in TopBar with count badge
+  - localStorage persistence (`campaign-variables` key)
+  - Toast notifications for all variable operations
 - **Export formats**: MJML source, HTML (via external converter), metadata JSON
 - **Email Import** ⭐ NEW (v0.6.0)
   - Import emails from formatted text (e.g., from Claude AI)
@@ -200,7 +211,45 @@ campaign/
   - Compare different approaches
   - Roll back to previous state
 
-### 7. Data Models
+### 7. Campaign Variables ⭐ NEW (v0.8.0)
+- **Variables Manager Modal** - Central management for campaign-level variables
+  - Accessed via teal "Variables" button in TopBar
+  - Count badge shows number of defined variables
+  - Clean modal UI with variable list and CRUD operations
+- **Variable Management**:
+  - **Add variables**: Name, default value, description fields
+  - **Edit variables**: Click edit icon to modify existing variables
+  - **Delete variables**: Remove with confirmation dialog
+  - **Common presets**: One-click addition of 8 standard variables
+    - firstName, lastName, email, company, phone, jobTitle, city, country
+    - Disabled if already added (shows checkmark)
+  - **Validation**: Name uniqueness, alphanumeric + underscore only
+- **Email Editor Integration**:
+  - "Insert Variable" dropdown (teal button with Variable icon)
+  - Available in both ContentPanel and EmailEditorModal
+  - Only shown in Visual edit mode (not Code mode)
+  - Click variable to insert at cursor: `{{variableName}}`
+  - Shows variable name, default value preview, and description
+  - Dropdown positioned left-aligned to prevent panel cutoff
+- **Preview Mode**:
+  - "Preview" button (purple with Eye icon) appears when variables exist
+  - Toggles between edit and preview modes
+  - Shows email content with all variables replaced by default values
+  - Purple-themed preview panel with clear indicator
+  - Real-time regex replacement of `{{variableName}}` patterns
+- **Data Storage**:
+  - localStorage key: `campaign-variables`
+  - Separate from campaign data and version history
+  - Auto-loads on app start
+  - Persists across sessions
+- **Use Cases**:
+  - Personalized email content: "Hi {{firstName}}"
+  - Dynamic links: "Visit {{companyWebsite}}"
+  - Location-specific content: "In {{city}}, {{country}}"
+  - Preview before sending to verify personalization
+  - Reusable across all email nodes in campaign
+
+### 8. Data Models
 
 #### Survey Node Data Structure
 ```javascript
@@ -463,6 +512,39 @@ campaign/
   - `versions` array
   - `onRestore`, `onDelete`, `onExport`, `onExportAll` callbacks
 - **Accessible from**: TopBar → "Versions" button (indigo with count badge)
+
+### `VariablesManager.jsx` (NEW - v0.8.0)
+- **Purpose**: Modal dialog for managing campaign-level variables
+- **Features**:
+  - CRUD operations: Create, read, update, delete variables
+  - Variable fields: name, default value, description
+  - 8 common preset variables with one-click addition
+  - Preset status indicators (checkmark if already added)
+  - Name validation (alphanumeric + underscore, must start with letter)
+  - Duplicate name prevention
+  - Toast notifications for all operations
+  - Empty state with helpful instructions
+  - Variable count display in header
+- **Layout**:
+  - Fixed center modal (max-width: 3xl)
+  - Backdrop with click-to-close
+  - Scrollable variable list
+  - Add/Edit forms inline with buttons
+- **Props**:
+  - `isOpen`, `onClose`
+  - `variables` array
+  - `onUpdate` callback for variable changes
+- **Data structure**:
+  ```javascript
+  {
+    id: "1234567890",
+    name: "firstName",
+    defaultValue: "John",
+    description: "Customer's first name"
+  }
+  ```
+- **Accessible from**: TopBar → "Variables" button (teal with count badge)
+- **Use case**: Define reusable personalization variables for email campaigns
 
 ## Development Patterns & Conventions
 
@@ -1020,6 +1102,7 @@ To add debug logging (optional future feature):
 - **v0.6.0** (Email Import Features): Bulk email import from formatted text (Open menu → "Import Emails (Bulk)"), single email import to update existing nodes ("Import" button in ContentPanel), structured text format with delimiters (`=== EMAIL START ===`), automatic A/B/C subject variant configuration, markdown support in Description and Notes fields with live preview, react-markdown library for rendering, emailParser.js utility with parseBulkEmails() and convertEmailsToNodes(), BulkEmailImportDialog with preview, SingleEmailImportDialog for node updates, sample-bulk-emails.txt example file showing proper format
 - **v0.7.0** (Version History): Manual version saving with "Save Version" button (indigo), VersionHistoryPanel component with right-side modal layout, version management operations (restore, export, delete, export all), localStorage storage separate from draft (`campaign-versions` key), auto-load versions on app start, limit of 20 versions with automatic cleanup, version metadata display (name, timestamp, campaign name, node/edge counts), chronological sorting (newest first), "Latest" badge on most recent version, confirmation dialogs for destructive operations, toast notifications for all version operations, "Versions" button with count badge in TopBar
 - **v0.7.1** (UI Consolidation): Consolidated version buttons into "History" dropdown menu to reduce toolbar clutter, combined "Save Version" and "Versions" buttons into single dropdown with two menu items ("Save Current Version", "View Version History"), added draft auto-save status display in History menu (shows "Draft auto-save: ON ✓" and last saved timestamp), version count badge moved to menu item instead of button, cleaner TopBar layout with 5 main buttons instead of 7, improved scalability for narrow windows
+- **v0.8.0** (Phase 6 - Campaign Variables): Complete variable management system for email personalization. VariablesManager.jsx component (395 lines) with CRUD operations, 8 common preset variables (firstName, lastName, email, company, phone, jobTitle, city, country), variable validation (unique names, alphanumeric + underscore). Email editor integration with "Insert Variable" dropdown in both ContentPanel and EmailEditorModal (click-to-insert at cursor position). Preview mode with Eye icon toggle to see emails with variables replaced by default values (purple-themed preview panel). Teal "Variables" button in TopBar with count badge. localStorage persistence (`campaign-variables` key) with auto-load on app start. Toast notifications for all variable operations. Real-time regex variable replacement in preview mode.
 
 ---
 
@@ -1061,6 +1144,6 @@ npm run dev
 
 ---
 
-**Last Updated**: 2025-10-25 (v0.7.1 - UI Consolidation)
+**Last Updated**: 2025-10-25 (v0.8.0 - Campaign Variables)
 **Project**: Campaign Builder
-**Status**: Active Development - Phase 4 Complete, Ready for Email Variables
+**Status**: Active Development - Phase 6 Complete, Ready for Backend Integration
