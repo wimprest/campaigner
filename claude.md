@@ -131,9 +131,16 @@ campaign/
   - "Open" menu (renamed from "Load") with file picker
   - Import saved JSON campaigns
   - Load campaign templates (Welcome Series, Satisfaction Survey, Re-engagement)
-- **Export Options**:
-  - **Email ZIP export**: MJML files, HTML placeholders, metadata JSON
+- **Export Options**: ⭐ ENHANCED (v0.5.0)
+  - **Export Selection**: Export only selected nodes as JSON (perfect for sharing partial campaigns or creating templates)
+  - **Email ZIP export**: MJML files, HTML placeholders, metadata JSON with comprehensive manifest
   - **Interactive HTML viewer**: Standalone HTML file with all campaign data
+  - **All exports use readable timestamps**: `campaign_name_2025-10-25_13-45-30.json` instead of Unix timestamps
+  - **Comprehensive manifest.json** in email exports listing all files and conversion instructions
+- **Import Merge Options**: ⭐ NEW (v0.5.0)
+  - When importing to a non-empty canvas, choose **Replace** (clear current) or **Append** (add to existing)
+  - Append mode automatically offsets imported nodes to avoid overlap
+  - ID remapping prevents conflicts when appending campaigns
 
 ### 5. User Experience & Feedback ⭐ PHASE 4
 - **Toast Notifications** - Modern, non-blocking notification system (react-hot-toast)
@@ -867,6 +874,7 @@ To add debug logging (optional future feature):
 - **v0.4.2** (Phase 4 - Bulk Operations): Multi-select with Shift+Drag selection box, Shift+Click additive selection, Ctrl+A select all, bulk duplication and deletion, visual keyboard shortcut tooltip, enhanced selection indicators (ring-8, opacity-75, shadow-2xl)
 - **v0.4.3** (Phase 4 - Save/Open UX Redesign): Traditional file-based save pattern, "Save" button downloads JSON file, auto-save draft to localStorage every 500ms, auto-load draft on app start, "Draft saved" indicator with timestamp, "Load" renamed to "Open", removed "Load from Browser Storage" option (auto-loads now), simplified Export menu (removed "Export as JSON" - now main Save button), "Clear" also clears localStorage draft
 - **v0.4.4** (Phase 4 - Search & Filter): Real-time search bar with magnifying glass icon, node type filter dropdown (All/Email/Survey/Conditional/Action/Delay), visual highlighting with 20% opacity for non-matching nodes, results counter showing "X of Y" nodes, clear filters button, smart search across node labels, descriptions, email subjects/content, survey questions/paths, conditional text, and action types
+- **v0.5.0** (Export Improvements): Readable timestamp filenames (`campaign_name_2025-10-25_13-45-30.json` instead of Unix timestamps), Export Selection feature to export only selected nodes as JSON, Import Merge Dialog with Replace/Append options, smart ID remapping and automatic node offsetting in append mode, comprehensive manifest.json in email ZIP exports listing all files and conversion instructions, toast notifications for all export operations with success messages
 
 ---
 
@@ -908,6 +916,6 @@ npm run dev
 
 ---
 
-**Last Updated**: 2025-10-25 (v0.4.4 - Phase 4: Search & Filter Complete)
+**Last Updated**: 2025-10-25 (v0.5.0 - Export Improvements Complete)
 **Project**: Campaign Builder
-**Status**: Active Development - Phase 4: COMPLETE! ✅ All 5 features done (Toast Notifications, Node Duplication, Bulk Operations, Save/Open Redesign, Search & Filter)
+**Status**: Active Development - Phase 4 Complete, Export Improvements Added

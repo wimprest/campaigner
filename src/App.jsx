@@ -15,12 +15,13 @@ import Sidebar from './components/Sidebar'
 import TopBar from './components/TopBar'
 import ContentPanel from './components/ContentPanel'
 import ValidationPanel from './components/ValidationPanel'
+import ImportMergeDialog from './components/ImportMergeDialog'
 import EmailNode from './components/nodes/EmailNode'
 import SurveyNode from './components/nodes/SurveyNode'
 import ConditionalNode from './components/nodes/ConditionalNode'
 import ActionNode from './components/nodes/ActionNode'
 import DelayNode from './components/nodes/DelayNode'
-import { exportCampaignJSON, exportAllEmailsAsZip, exportAsInteractiveHTML } from './utils/exportUtils'
+import { exportCampaignJSON, exportAllEmailsAsZip, exportAsInteractiveHTML, exportSelectedNodesJSON } from './utils/exportUtils'
 import { loadTemplate } from './utils/campaignTemplates'
 import { validateCampaign } from './utils/campaignValidation'
 import toast, { Toaster } from 'react-hot-toast'
@@ -81,6 +82,10 @@ function FlowBuilder() {
   // Search and filter
   const [searchTerm, setSearchTerm] = useState('')
   const [nodeTypeFilter, setNodeTypeFilter] = useState('all') // 'all' | 'email' | 'survey' | 'conditional' | 'action' | 'delay'
+
+  // Import merge dialog
+  const [showImportDialog, setShowImportDialog] = useState(false)
+  const [pendingImportData, setPendingImportData] = useState(null)
 
   const onConnect = useCallback(
     (params) => {
@@ -282,6 +287,15 @@ function FlowBuilder() {
     exportAsInteractiveHTML(nodes, edges, campaignName)
   }, [campaignName, nodes, edges])
 
+  const handleExportSelection = useCallback(() => {
+    const selectedNodes = nodes.filter(node => node.selected)
+    if (selectedNodes.length === 0) {
+      toast.error('No nodes selected. Select nodes first by clicking on them.')
+      return
+    }
+    exportSelectedNodesJSON(selectedNodes, edges, campaignName)
+  }, [nodes, edges, campaignName])
+
   const handleImportJSON = useCallback((file) => {
     if (!file) return
 
@@ -291,11 +305,14 @@ function FlowBuilder() {
         const importedData = JSON.parse(e.target.result)
 
         if (importedData.nodes && importedData.edges) {
-          setCampaignName(importedData.campaignName || 'Imported Campaign')
-          setNodes(importedData.nodes)
-          setEdges(importedData.edges)
-          updateIdCounter(importedData.nodes)
-          toast.success('Campaign imported successfully!')
+          // Show merge dialog if there are existing nodes
+          if (nodes.length > 0) {
+            setPendingImportData(importedData)
+            setShowImportDialog(true)
+          } else {
+            // Empty canvas - just import directly
+            performImportReplace(importedData)
+          }
         } else {
           toast.error('Invalid campaign file format')
         }
@@ -305,7 +322,75 @@ function FlowBuilder() {
       }
     }
     reader.readAsText(file)
+  }, [nodes, setNodes, setEdges])
+
+  const performImportReplace = useCallback((importedData) => {
+    setCampaignName(importedData.campaignName || 'Imported Campaign')
+    setNodes(importedData.nodes)
+    setEdges(importedData.edges)
+    updateIdCounter(importedData.nodes)
+    saveToHistory(importedData.nodes, importedData.edges)
+    toast.success('Campaign imported successfully!')
+    setShowImportDialog(false)
+    setPendingImportData(null)
   }, [setNodes, setEdges])
+
+  const performImportAppend = useCallback((importedData) => {
+    // Get current highest node ID to offset imported nodes
+    const currentMaxId = id
+
+    // Remap imported node IDs to avoid conflicts
+    const idMap = {}
+    const remappedNodes = importedData.nodes.map((node, index) => {
+      const oldId = node.id
+      const newId = `node_${currentMaxId + index}`
+      idMap[oldId] = newId
+
+      // Position imported nodes offset from origin
+      return {
+        ...node,
+        id: newId,
+        position: {
+          x: node.position.x + 300, // Offset right
+          y: node.position.y + 100  // Offset down
+        }
+      }
+    })
+
+    // Remap edges to use new node IDs
+    const remappedEdges = importedData.edges.map(edge => ({
+      ...edge,
+      id: `${idMap[edge.source]}-${idMap[edge.target]}`,
+      source: idMap[edge.source],
+      target: idMap[edge.target]
+    }))
+
+    // Append to existing nodes/edges
+    setNodes(prevNodes => [...prevNodes, ...remappedNodes])
+    setEdges(prevEdges => [...prevEdges, ...remappedEdges])
+    updateIdCounter(remappedNodes)
+    saveToHistory([...nodes, ...remappedNodes], [...edges, ...remappedEdges])
+    toast.success(`Appended ${remappedNodes.length} nodes to campaign`)
+    setShowImportDialog(false)
+    setPendingImportData(null)
+  }, [nodes, edges, setNodes, setEdges])
+
+  const handleImportReplace = useCallback(() => {
+    if (pendingImportData) {
+      performImportReplace(pendingImportData)
+    }
+  }, [pendingImportData, performImportReplace])
+
+  const handleImportAppend = useCallback(() => {
+    if (pendingImportData) {
+      performImportAppend(pendingImportData)
+    }
+  }, [pendingImportData, performImportAppend])
+
+  const handleCancelImport = useCallback(() => {
+    setShowImportDialog(false)
+    setPendingImportData(null)
+  }, [])
 
   const handleLoadTemplate = useCallback((templateKey) => {
     const templateData = loadTemplate(templateKey)
@@ -760,6 +845,7 @@ function FlowBuilder() {
         onLoadTemplate={handleLoadTemplate}
         onExportEmails={handleExportEmails}
         onExportHTML={handleExportHTML}
+        onExportSelection={handleExportSelection}
         onClear={clearCanvas}
         onValidate={handleValidateCampaign}
         saveStatus={saveStatus}
@@ -864,6 +950,13 @@ function FlowBuilder() {
           onIssueClick={handleValidationIssueClick}
         />
       )}
+      <ImportMergeDialog
+        isOpen={showImportDialog}
+        onClose={handleCancelImport}
+        onReplace={handleImportReplace}
+        onAppend={handleImportAppend}
+        importData={pendingImportData}
+      />
     </div>
   )
 }

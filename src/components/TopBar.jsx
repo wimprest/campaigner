@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { Save, Upload, Download, Trash2, ChevronDown, FileJson, Mail, Globe, FolderOpen, CheckCircle, Search, X, Filter } from 'lucide-react'
+import { Save, Upload, Download, Trash2, ChevronDown, FileJson, Mail, Globe, FolderOpen, CheckCircle, Search, X, Filter, FileCheck } from 'lucide-react'
 
 export default function TopBar({
   campaignName,
@@ -9,6 +9,7 @@ export default function TopBar({
   onLoadTemplate,
   onExportEmails,
   onExportHTML,
+  onExportSelection,
   onClear,
   onValidate,
   saveStatus,
@@ -246,6 +247,20 @@ export default function TopBar({
                 onClick={() => setShowExportMenu(false)}
               />
               <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                <button
+                  onClick={() => {
+                    onExportSelection()
+                    setShowExportMenu(false)
+                  }}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center text-sm"
+                >
+                  <FileCheck className="w-4 h-4 mr-2 text-gray-600" />
+                  <div className="flex-1">
+                    <div className="font-medium">Export Selection</div>
+                    <div className="text-xs text-gray-500">Selected nodes only</div>
+                  </div>
+                </button>
+                <div className="border-t border-gray-200 my-1" />
                 <button
                   onClick={() => {
                     onExportEmails()

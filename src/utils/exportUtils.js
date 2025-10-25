@@ -47,7 +47,9 @@ export const exportCampaignJSON = (flowDataOrNodes, edgesOrCampaignName, campaig
   const dataStr = JSON.stringify(flowData, null, 2)
   const dataBlob = new Blob([dataStr], { type: 'application/json' })
   const fileName = sanitizeFileName(campaignName)
-  saveAs(dataBlob, `${fileName}-${Date.now()}.json`)
+  const timestamp = getReadableTimestamp()
+  saveAs(dataBlob, `${fileName}_${timestamp}.json`)
+  toast.success(`Campaign exported: ${fileName}_${timestamp}.json`, { duration: 3000 })
 }
 
 // Export selected nodes as JSON
@@ -67,7 +69,10 @@ export const exportSelectedNodesJSON = (selectedNodes, edges, campaignName = 'se
 
   const dataStr = JSON.stringify(flowData, null, 2)
   const dataBlob = new Blob([dataStr], { type: 'application/json' })
-  saveAs(dataBlob, `${campaignName}-selection-${Date.now()}.json`)
+  const fileName = sanitizeFileName(campaignName)
+  const timestamp = getReadableTimestamp()
+  saveAs(dataBlob, `${fileName}_selection_${timestamp}.json`)
+  toast.success(`Selection exported: ${selectedNodes.length} nodes`, { duration: 3000 })
 }
 
 // Export all email nodes as MJML + HTML files in a ZIP
@@ -168,9 +173,34 @@ The HTML files in this ZIP show template previews and instructions.
 Edit the .mjml files to customize your emails!
 `)
 
+  // Add comprehensive manifest
+  const manifest = {
+    campaignName,
+    exportDate: new Date().toISOString(),
+    totalEmails: emailNodes.length,
+    emails: emailNodes.map(node => ({
+      id: node.id,
+      title: node.data.label,
+      subject: node.data.subject,
+      hasABTesting: node.data.subjectVariants && node.data.subjectVariants.length > 1,
+      mjmlFile: `mjml/${sanitizeFileName(node.data.label || node.id)}.mjml`,
+      htmlFile: `html/${sanitizeFileName(node.data.label || node.id)}.html`,
+      metadataFile: `metadata/${sanitizeFileName(node.data.label || node.id)}.json`
+    })),
+    instructions: {
+      mjmlConversion: 'Use https://mjml.io/try-it-live or MJML API to convert .mjml files to production HTML',
+      apiEndpoint: 'https://api.mjml.io/v1/render',
+      cliCommand: 'mjml input.mjml -o output.html'
+    }
+  }
+  metadataFolder.file('manifest.json', JSON.stringify(manifest, null, 2))
+
   // Generate ZIP and download
   const content = await zip.generateAsync({ type: 'blob' })
-  saveAs(content, `${campaignName}-emails-${Date.now()}.zip`)
+  const fileName = sanitizeFileName(campaignName)
+  const timestamp = getReadableTimestamp()
+  saveAs(content, `${fileName}_emails_${timestamp}.zip`)
+  toast.success(`Email export complete: ${emailNodes.length} emails`, { duration: 3000 })
 }
 
 // Export single email node as MJML
@@ -291,7 +321,10 @@ export const exportAsInteractiveHTML = (nodes, edges, campaignName = 'campaign')
 </html>`
 
   const htmlBlob = new Blob([htmlContent], { type: 'text/html' })
-  saveAs(htmlBlob, `${campaignName}-viewer-${Date.now()}.html`)
+  const fileName = sanitizeFileName(campaignName)
+  const timestamp = getReadableTimestamp()
+  saveAs(htmlBlob, `${fileName}_viewer_${timestamp}.html`)
+  toast.success(`HTML viewer exported`, { duration: 3000 })
 }
 
 // Helper: Render single node as HTML
@@ -410,4 +443,16 @@ function sanitizeFileName(name) {
     .replace(/[^a-z0-9]/gi, '_')
     .replace(/_{2,}/g, '_')
     .toLowerCase()
+}
+
+// Helper: Generate readable timestamp for filenames
+function getReadableTimestamp() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  const hours = String(now.getHours()).padStart(2, '0')
+  const minutes = String(now.getMinutes()).padStart(2, '0')
+  const seconds = String(now.getSeconds()).padStart(2, '0')
+  return `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`
 }
