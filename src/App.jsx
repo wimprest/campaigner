@@ -17,6 +17,7 @@ import ContentPanel from './components/ContentPanel'
 import ValidationPanel from './components/ValidationPanel'
 import ImportMergeDialog from './components/ImportMergeDialog'
 import BulkEmailImportDialog from './components/BulkEmailImportDialog'
+import VersionHistoryPanel from './components/VersionHistoryPanel'
 import EmailNode from './components/nodes/EmailNode'
 import SurveyNode from './components/nodes/SurveyNode'
 import ConditionalNode from './components/nodes/ConditionalNode'
@@ -91,6 +92,10 @@ function FlowBuilder() {
 
   // Bulk email import dialog
   const [showBulkImportDialog, setShowBulkImportDialog] = useState(false)
+
+  // Version history
+  const [versions, setVersions] = useState([])
+  const [showVersionPanel, setShowVersionPanel] = useState(false)
 
   const onConnect = useCallback(
     (params) => {
@@ -426,6 +431,145 @@ function FlowBuilder() {
       toast.error('Failed to load template')
     }
   }, [setNodes, setEdges])
+
+  // Version History Management
+  const handleSaveVersion = useCallback(() => {
+    const versionName = prompt('Enter a name for this version (optional):')
+    if (versionName === null) return // User cancelled
+
+    const timestamp = Date.now()
+    const newVersion = {
+      id: timestamp,
+      name: versionName.trim() || `Version ${versions.length + 1} - ${new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}`,
+      timestamp,
+      campaignName,
+      nodeCount: nodes.length,
+      edgeCount: edges.length,
+      nodes: JSON.parse(JSON.stringify(nodes)), // Deep clone
+      edges: JSON.parse(JSON.stringify(edges))
+    }
+
+    const updatedVersions = [...versions, newVersion]
+
+    // Limit to last 20 versions to prevent localStorage bloat
+    const limitedVersions = updatedVersions.slice(-20)
+
+    setVersions(limitedVersions)
+    localStorage.setItem('campaign-versions', JSON.stringify(limitedVersions))
+
+    toast.success(`Version "${newVersion.name}" saved!`, { icon: '💾', duration: 3000 })
+  }, [nodes, edges, campaignName, versions])
+
+  const handleRestoreVersion = useCallback((versionId) => {
+    const version = versions.find(v => v.id === versionId)
+    if (!version) {
+      toast.error('Version not found')
+      return
+    }
+
+    if (window.confirm(`Restore "${version.name}"? Your current work will be replaced.`)) {
+      setCampaignName(version.campaignName)
+      setNodes(version.nodes)
+      setEdges(version.edges)
+      updateIdCounter(version.nodes)
+      saveToHistory(version.nodes, version.edges)
+      setShowVersionPanel(false)
+      toast.success(`Restored "${version.name}"`, { icon: '🔄', duration: 3000 })
+    }
+  }, [versions, setNodes, setEdges])
+
+  const handleDeleteVersion = useCallback((versionId) => {
+    const version = versions.find(v => v.id === versionId)
+    if (!version) {
+      toast.error('Version not found')
+      return
+    }
+
+    if (window.confirm(`Delete version "${version.name}"? This cannot be undone.`)) {
+      const updatedVersions = versions.filter(v => v.id !== versionId)
+      setVersions(updatedVersions)
+      localStorage.setItem('campaign-versions', JSON.stringify(updatedVersions))
+      toast.success(`Deleted "${version.name}"`, { icon: '🗑️' })
+    }
+  }, [versions])
+
+  const handleExportVersion = useCallback((versionId) => {
+    const version = versions.find(v => v.id === versionId)
+    if (!version) {
+      toast.error('Version not found')
+      return
+    }
+
+    const exportData = {
+      campaignName: version.campaignName,
+      version: '0.7.0',
+      exported: new Date().toISOString(),
+      versionName: version.name,
+      versionTimestamp: version.timestamp,
+      nodeCount: version.nodeCount,
+      edgeCount: version.edgeCount,
+      nodes: version.nodes,
+      edges: version.edges
+    }
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+
+    // Clean filename
+    const safeName = version.campaignName.replace(/[^a-z0-9]/gi, '_').toLowerCase()
+    const safeVersionName = version.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()
+    const timestamp = new Date(version.timestamp).toISOString().slice(0, 19).replace(/:/g, '-')
+    a.download = `${safeName}_${safeVersionName}_${timestamp}.json`
+
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+
+    toast.success(`Exported "${version.name}"`, { icon: '📥', duration: 2000 })
+  }, [versions])
+
+  const handleExportAllVersions = useCallback(() => {
+    if (versions.length === 0) {
+      toast.error('No versions to export')
+      return
+    }
+
+    const exportData = {
+      campaignName,
+      exportType: 'version-history',
+      version: '0.7.0',
+      exported: new Date().toISOString(),
+      totalVersions: versions.length,
+      versions: versions.map(v => ({
+        name: v.name,
+        timestamp: v.timestamp,
+        campaignName: v.campaignName,
+        nodeCount: v.nodeCount,
+        edgeCount: v.edgeCount,
+        nodes: v.nodes,
+        edges: v.edges
+      }))
+    }
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+
+    const safeName = campaignName.replace(/[^a-z0-9]/gi, '_').toLowerCase()
+    const timestamp = new Date().toISOString().slice(0, 10)
+    a.download = `${safeName}_version_history_${timestamp}.json`
+
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+
+    toast.success(`Exported ${versions.length} versions`, { icon: '📦', duration: 3000 })
+  }, [versions, campaignName])
 
   const clearCanvas = useCallback(() => {
     if (window.confirm('Are you sure you want to clear the entire canvas? This will also delete the auto-saved draft from browser storage.')) {
@@ -826,6 +970,17 @@ function FlowBuilder() {
         toast.error('Failed to restore draft')
       }
     }
+
+    // Load version history
+    const savedVersions = localStorage.getItem('campaign-versions')
+    if (savedVersions) {
+      try {
+        const versionData = JSON.parse(savedVersions)
+        setVersions(versionData)
+      } catch (error) {
+        console.error('Failed to load version history:', error)
+      }
+    }
   }, []) // Run only once on mount
 
   // Auto-save draft to localStorage when campaign changes
@@ -872,6 +1027,9 @@ function FlowBuilder() {
         onExportSelection={handleExportSelection}
         onClear={clearCanvas}
         onValidate={handleValidateCampaign}
+        onOpenVersionHistory={() => setShowVersionPanel(true)}
+        onSaveVersion={handleSaveVersion}
+        versionsCount={versions.length}
         saveStatus={saveStatus}
         lastSaved={lastSaved}
         searchTerm={searchTerm}
@@ -986,6 +1144,15 @@ function FlowBuilder() {
         isOpen={showBulkImportDialog}
         onClose={() => setShowBulkImportDialog(false)}
         onImport={handleBulkEmailImport}
+      />
+      <VersionHistoryPanel
+        isOpen={showVersionPanel}
+        onClose={() => setShowVersionPanel(false)}
+        versions={versions}
+        onRestore={handleRestoreVersion}
+        onDelete={handleDeleteVersion}
+        onExport={handleExportVersion}
+        onExportAll={handleExportAllVersions}
       />
     </div>
   )

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { X, Plus, Trash, Mail, ChevronDown, ChevronUp, Maximize2, Settings, Play, AlertTriangle, Copy } from 'lucide-react'
+import { X, Plus, Trash, Mail, ChevronDown, ChevronUp, Maximize2, Settings, Play, AlertTriangle, Copy, Upload } from 'lucide-react'
 import { emailTemplates, getTemplateList } from '../utils/emailTemplates'
 import { validateSurvey } from '../utils/surveyLogic'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import EmailEditorModal from './EmailEditorModal'
 import SurveyTestModal from './SurveyTestModal'
+import SingleEmailImportDialog from './SingleEmailImportDialog'
 import toast from 'react-hot-toast'
 import ReactMarkdown from 'react-markdown'
 

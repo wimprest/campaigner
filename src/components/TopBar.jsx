@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { Save, Upload, Download, Trash2, ChevronDown, FileJson, Mail, Globe, FolderOpen, CheckCircle, Search, X, Filter, FileCheck } from 'lucide-react'
+import { Save, Upload, Download, Trash2, ChevronDown, FileJson, Mail, Globe, FolderOpen, CheckCircle, Search, X, Filter, FileCheck, Clock } from 'lucide-react'
 
 export default function TopBar({
   campaignName,
@@ -13,6 +13,9 @@ export default function TopBar({
   onExportSelection,
   onClear,
   onValidate,
+  onOpenVersionHistory,
+  onSaveVersion,
+  versionsCount,
   saveStatus,
   lastSaved,
   searchTerm,
@@ -302,6 +305,29 @@ export default function TopBar({
             </>
           )}
         </div>
+
+        <button
+          onClick={onSaveVersion}
+          className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+          title="Save current campaign as a version"
+        >
+          <Clock className="w-4 h-4 mr-2" />
+          Save Version
+        </button>
+
+        <button
+          onClick={onOpenVersionHistory}
+          className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+          title="View and restore saved versions"
+        >
+          <Clock className="w-4 h-4 mr-2" />
+          Versions
+          {versionsCount > 0 && (
+            <span className="ml-1.5 px-1.5 py-0.5 bg-indigo-500 text-white text-xs font-bold rounded">
+              {versionsCount}
+            </span>
+          )}
+        </button>
 
         <button
           onClick={onValidate}
