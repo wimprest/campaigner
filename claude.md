@@ -117,12 +117,23 @@ campaign/
 - Visual indicators: 🧠 badge on nodes with advanced rules
 - Priority: Advanced rules > Numeric range routing > Score routing > Simple mapping
 
-### 4. Save/Load/Export
-- **Browser localStorage** for persistence
-- **JSON export** with metadata (version, timestamps, node counts)
-- **Email ZIP export**: MJML files, HTML placeholders, metadata JSON
-- **Interactive HTML viewer**: Standalone HTML file with all campaign data
-- **Template library**: 3 pre-built campaigns (Welcome Series, Satisfaction Survey, Re-engagement)
+### 4. Save/Open/Export ⭐ REDESIGNED (Phase 4)
+- **Traditional File-Based Save** - "Save" button downloads JSON file (like Photoshop, Word)
+  - Downloads campaign as JSON file you can keep, email, backup
+  - Replaces old localStorage save button
+  - Full campaign data with metadata (version, timestamps, node counts)
+- **Auto-Save Draft** - Silent background saving to browser localStorage
+  - Auto-saves every 500ms after changes (debounced)
+  - Auto-loads on app start - no manual "Load from Storage" needed
+  - Crash protection - never lose work
+  - "Draft saved" indicator shows status and timestamp
+- **Open File** - Load campaigns from JSON files
+  - "Open" menu (renamed from "Load") with file picker
+  - Import saved JSON campaigns
+  - Load campaign templates (Welcome Series, Satisfaction Survey, Re-engagement)
+- **Export Options**:
+  - **Email ZIP export**: MJML files, HTML placeholders, metadata JSON
+  - **Interactive HTML viewer**: Standalone HTML file with all campaign data
 
 ### 5. User Experience & Feedback ⭐ PHASE 4
 - **Toast Notifications** - Modern, non-blocking notification system (react-hot-toast)
@@ -822,6 +833,7 @@ To add debug logging (optional future feature):
 - **v0.4.0** (Phase 4 - UX Polish): Toast notifications system (react-hot-toast), replaced all 14 browser alert() dialogs with modern, non-blocking toasts for save/load/export/error feedback
 - **v0.4.1** (Phase 4 - Node Duplication): One-click node duplication with Duplicate button and Ctrl+D/Cmd+D shortcut, smart ID regeneration for complex survey nodes, automatic label updating with "(Copy)" suffix
 - **v0.4.2** (Phase 4 - Bulk Operations): Multi-select with Shift+Drag selection box, Shift+Click additive selection, Ctrl+A select all, bulk duplication and deletion, visual keyboard shortcut tooltip, enhanced selection indicators (ring-8, opacity-75, shadow-2xl)
+- **v0.4.3** (Phase 4 - Save/Open UX Redesign): Traditional file-based save pattern, "Save" button downloads JSON file, auto-save draft to localStorage every 500ms, auto-load draft on app start, "Draft saved" indicator with timestamp, "Load" renamed to "Open", removed "Load from Browser Storage" option (auto-loads now), simplified Export menu (removed "Export as JSON" - now main Save button), "Clear" also clears localStorage draft
 
 ---
 
@@ -863,6 +875,6 @@ npm run dev
 
 ---
 
-**Last Updated**: 2025-10-24 (v0.4.2 - Phase 4: Bulk Operations Complete)
+**Last Updated**: 2025-10-25 (v0.4.3 - Phase 4: Save/Open UX Redesign)
 **Project**: Campaign Builder
-**Status**: Active Development - Phase 4: 3 of 5 features complete
+**Status**: Active Development - Phase 4: 4 of 5 features complete (Toast Notifications, Node Duplication, Bulk Operations, Save/Open Redesign)

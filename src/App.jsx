@@ -74,6 +74,10 @@ function FlowBuilder() {
   const [isValidationPanelOpen, setIsValidationPanelOpen] = useState(false)
   const [validationResults, setValidationResults] = useState(null)
 
+  // Auto-save status (for draft indicator)
+  const [saveStatus, setSaveStatus] = useState('saved') // 'saving' | 'saved'
+  const [lastSaved, setLastSaved] = useState(null) // timestamp
+
   const onConnect = useCallback(
     (params) => {
       // Find the source node to get path label for survey nodes
@@ -262,30 +266,6 @@ function FlowBuilder() {
     [setNodes]
   )
 
-  const saveToLocalStorage = useCallback(() => {
-    const flowData = {
-      campaignName,
-      nodes,
-      edges,
-    }
-    localStorage.setItem('campaign-flow', JSON.stringify(flowData))
-    toast.success('Campaign saved successfully!')
-  }, [campaignName, nodes, edges])
-
-  const loadFromLocalStorage = useCallback(() => {
-    const savedFlow = localStorage.getItem('campaign-flow')
-    if (savedFlow) {
-      const flowData = JSON.parse(savedFlow)
-      setCampaignName(flowData.campaignName || 'Untitled Campaign')
-      setNodes(flowData.nodes || [])
-      setEdges(flowData.edges || [])
-      updateIdCounter(flowData.nodes || [])
-      toast.success('Campaign loaded successfully!')
-    } else {
-      toast.error('No saved campaign found!')
-    }
-  }, [setNodes, setEdges])
-
   const handleExportJSON = useCallback(() => {
     exportCampaignJSON({ campaignName, nodes, edges }, campaignName)
   }, [campaignName, nodes, edges])
@@ -336,12 +316,17 @@ function FlowBuilder() {
   }, [setNodes, setEdges])
 
   const clearCanvas = useCallback(() => {
-    if (window.confirm('Are you sure you want to clear the entire canvas?')) {
+    if (window.confirm('Are you sure you want to clear the entire canvas? This will also delete the auto-saved draft from browser storage.')) {
       setNodes([])
       setEdges([])
       setSelectedNode(null)
+      setCampaignName('Untitled Campaign')
       saveToHistory([], [])
+      localStorage.removeItem('campaign-flow') // Clear the auto-saved draft
+      setLastSaved(null)
+      setSaveStatus('saved')
       id = 0 // Reset ID counter when clearing canvas
+      toast.success('Canvas and draft cleared')
     }
   }, [setNodes, setEdges])
 
@@ -628,20 +613,72 @@ function FlowBuilder() {
     }
   }, [nodes, edges])
 
+  // Auto-load draft from localStorage on mount
+  useEffect(() => {
+    const savedFlow = localStorage.getItem('campaign-flow')
+    if (savedFlow) {
+      try {
+        const flowData = JSON.parse(savedFlow)
+        setCampaignName(flowData.campaignName || 'Untitled Campaign')
+        setNodes(flowData.nodes || [])
+        setEdges(flowData.edges || [])
+        updateIdCounter(flowData.nodes || [])
+        setLastSaved(flowData.timestamp || null)
+        toast.success('Draft restored from browser storage', {
+          icon: '📄',
+          duration: 2000
+        })
+      } catch (error) {
+        console.error('Failed to load draft:', error)
+        toast.error('Failed to restore draft')
+      }
+    }
+  }, []) // Run only once on mount
+
+  // Auto-save draft to localStorage when campaign changes
+  useEffect(() => {
+    // Don't auto-save on initial mount (empty campaign)
+    if (nodes.length === 0 && edges.length === 0 && campaignName === 'Untitled Campaign') {
+      return
+    }
+
+    setSaveStatus('saving')
+
+    const timeoutId = setTimeout(() => {
+      const flowData = {
+        campaignName,
+        nodes,
+        edges,
+        timestamp: Date.now()
+      }
+      try {
+        localStorage.setItem('campaign-flow', JSON.stringify(flowData))
+        setSaveStatus('saved')
+        setLastSaved(Date.now())
+      } catch (error) {
+        console.error('Failed to auto-save:', error)
+        toast.error('Failed to save draft')
+        setSaveStatus('saved') // Reset status even on error
+      }
+    }, 500) // Debounce: save 500ms after last change
+
+    return () => clearTimeout(timeoutId)
+  }, [nodes, edges, campaignName])
+
   return (
     <div className="h-screen flex flex-col">
       <TopBar
         campaignName={campaignName}
         onCampaignNameChange={setCampaignName}
-        onSave={saveToLocalStorage}
-        onLoad={loadFromLocalStorage}
+        onSave={handleExportJSON}
         onImport={handleImportJSON}
         onLoadTemplate={handleLoadTemplate}
-        onExportJSON={handleExportJSON}
         onExportEmails={handleExportEmails}
         onExportHTML={handleExportHTML}
         onClear={clearCanvas}
         onValidate={handleValidateCampaign}
+        saveStatus={saveStatus}
+        lastSaved={lastSaved}
       />
       <div className="flex-1 flex overflow-hidden">
         <Sidebar />
