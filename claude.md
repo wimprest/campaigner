@@ -25,6 +25,7 @@ A visual, drag-and-drop marketing campaign builder built with React and React Fl
 ### Icons & UI
 - **Lucide React** - Icon library
 - **react-hot-toast** - Toast notification system for user feedback
+- **react-markdown** - Markdown rendering for descriptions and notes
 - **Custom node components** - 5 specialized node types
 
 ## Project Structure
@@ -41,10 +42,13 @@ campaign/
 │   │   │   └── DelayNode.jsx    # Time-based delays
 │   │   ├── ContentPanel.jsx     # Right-side editor panel (CRITICAL FILE)
 │   │   ├── EmailEditorModal.jsx # Full-screen email editor with template manager
+│   │   ├── BulkEmailImportDialog.jsx  # Bulk email import with preview
+│   │   ├── SingleEmailImportDialog.jsx # Single email import for node updates
 │   │   ├── Sidebar.jsx          # Left-side node palette
 │   │   └── TopBar.jsx           # Save/Load/Export menu
 │   ├── utils/
 │   │   ├── exportUtils.js       # JSON/HTML/ZIP export functions
+│   │   ├── emailParser.js       # Email text format parser (bulk & single import)
 │   │   ├── emailTemplates.js    # 6 MJML email templates
 │   │   ├── campaignTemplates.js # 3 pre-built campaign flows
 │   │   └── surveyLogic.js       # Survey path evaluation engine
@@ -79,6 +83,16 @@ campaign/
   - Industry best practice: 1,500+ recipients per variant
 - **Variable support**: `{{ firstName }}`, `{{ ctaLink }}`
 - **Export formats**: MJML source, HTML (via external converter), metadata JSON
+- **Email Import** ⭐ NEW (v0.6.0)
+  - Import emails from formatted text (e.g., from Claude AI)
+  - **Bulk import**: Create multiple email nodes at once from Open menu
+  - **Single import**: Update existing email node with "Import" button
+  - Structured format with delimiters (`=== EMAIL START ===` / `=== EMAIL END ===`)
+  - Fields: TITLE, DESCRIPTION, SUBJECT_A/B/C, CONTENT, NOTES
+  - **Markdown support**: Description and Notes fields support bullets, bold, numbered lists
+  - **Live preview**: See formatted markdown before import (bulk only)
+  - **A/B/C auto-configuration**: Automatic subject variant setup with weight distribution
+  - **Sample file included**: `sample-bulk-emails.txt` shows proper format
 
 ### 3. Survey Nodes (MOST COMPLEX)
 - **Multi-question surveys** with collapsible UI
@@ -335,6 +349,59 @@ campaign/
   - Large campaigns with many nodes
   - When clicking validation issues that open nodes for editing
   - Quick visual feedback during node navigation
+
+### `utils/emailParser.js` (NEW - v0.6.0)
+- **Purpose**: Parse formatted email text into structured email objects
+- **Functions**:
+  - `parseBulkEmails(text)` - Main parser function that extracts emails from text
+    - Returns `{ emails: [], errors: [] }` object
+    - Parses all fields: TITLE, DESCRIPTION, SUBJECT_A/B/C, CONTENT, NOTES
+    - Validates required fields (TITLE, SUBJECT_A, CONTENT)
+    - Handles multiline content with regex
+    - Trims whitespace from all fields
+  - `convertEmailsToNodes(emails, startPosition, startId)` - Converts parsed emails to ReactFlow nodes
+    - Creates email nodes with proper data structure
+    - Auto-configures subject variants with weight distribution (33/33/34%)
+    - Positions nodes vertically with 200px spacing
+    - Remaps IDs to prevent conflicts
+- **Format**: Uses delimiters (`=== EMAIL START ===` / `=== EMAIL END ===`)
+- **Markdown**: Description and Notes fields preserve markdown for rendering
+- **Usage**: Shared by both BulkEmailImportDialog and SingleEmailImportDialog
+
+### `BulkEmailImportDialog.jsx` (NEW - v0.6.0)
+- **Purpose**: Dialog for importing multiple emails at once to create new nodes
+- **Features**:
+  - Paste area for formatted email text
+  - "Parse Emails" button validates and extracts data
+  - Preview section with markdown rendering
+  - Shows all parsed emails before import
+  - Error display with helpful validation messages
+  - Example format in collapsible section
+  - Success toast on import
+- **Workflow**:
+  1. User pastes formatted text
+  2. Click "Parse Emails" to validate
+  3. Preview shows all emails with formatted markdown
+  4. Click "Import X Emails" to create nodes
+- **Accessible from**: Open menu → "Import Emails (Bulk)"
+- **Use case**: Import campaign emails written by AI or copied from documents
+
+### `SingleEmailImportDialog.jsx` (NEW - v0.6.0)
+- **Purpose**: Dialog for importing one email to update an existing email node
+- **Features**:
+  - Simplified import flow (no preview)
+  - Validates that exactly 1 email is provided
+  - Shows helpful error if 0 or multiple emails detected
+  - Directs user to bulk import if needed
+  - Updates node data without creating new node
+  - Example format in collapsible section
+- **Workflow**:
+  1. User pastes single formatted email
+  2. Click "Import & Update" to validate and apply
+  3. Node data updated with new content
+  4. Success toast confirms import
+- **Accessible from**: ContentPanel → Email section → "Import" button (green)
+- **Use case**: Update existing email content from AI-generated text
 
 ## Development Patterns & Conventions
 
@@ -875,6 +942,7 @@ To add debug logging (optional future feature):
 - **v0.4.3** (Phase 4 - Save/Open UX Redesign): Traditional file-based save pattern, "Save" button downloads JSON file, auto-save draft to localStorage every 500ms, auto-load draft on app start, "Draft saved" indicator with timestamp, "Load" renamed to "Open", removed "Load from Browser Storage" option (auto-loads now), simplified Export menu (removed "Export as JSON" - now main Save button), "Clear" also clears localStorage draft
 - **v0.4.4** (Phase 4 - Search & Filter): Real-time search bar with magnifying glass icon, node type filter dropdown (All/Email/Survey/Conditional/Action/Delay), visual highlighting with 20% opacity for non-matching nodes, results counter showing "X of Y" nodes, clear filters button, smart search across node labels, descriptions, email subjects/content, survey questions/paths, conditional text, and action types
 - **v0.5.0** (Export Improvements): Readable timestamp filenames (`campaign_name_2025-10-25_13-45-30.json` instead of Unix timestamps), Export Selection feature to export only selected nodes as JSON, Import Merge Dialog with Replace/Append options, smart ID remapping and automatic node offsetting in append mode, comprehensive manifest.json in email ZIP exports listing all files and conversion instructions, toast notifications for all export operations with success messages
+- **v0.6.0** (Email Import Features): Bulk email import from formatted text (Open menu → "Import Emails (Bulk)"), single email import to update existing nodes ("Import" button in ContentPanel), structured text format with delimiters (`=== EMAIL START ===`), automatic A/B/C subject variant configuration, markdown support in Description and Notes fields with live preview, react-markdown library for rendering, emailParser.js utility with parseBulkEmails() and convertEmailsToNodes(), BulkEmailImportDialog with preview, SingleEmailImportDialog for node updates, sample-bulk-emails.txt example file showing proper format
 
 ---
 
@@ -916,6 +984,6 @@ npm run dev
 
 ---
 
-**Last Updated**: 2025-10-25 (v0.5.0 - Export Improvements Complete)
+**Last Updated**: 2025-10-25 (v0.6.0 - Email Import Features)
 **Project**: Campaign Builder
-**Status**: Active Development - Phase 4 Complete, Export Improvements Added
+**Status**: Active Development - Email Import Complete (Bulk & Single)

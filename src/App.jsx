@@ -16,6 +16,7 @@ import TopBar from './components/TopBar'
 import ContentPanel from './components/ContentPanel'
 import ValidationPanel from './components/ValidationPanel'
 import ImportMergeDialog from './components/ImportMergeDialog'
+import BulkEmailImportDialog from './components/BulkEmailImportDialog'
 import EmailNode from './components/nodes/EmailNode'
 import SurveyNode from './components/nodes/SurveyNode'
 import ConditionalNode from './components/nodes/ConditionalNode'
@@ -24,6 +25,7 @@ import DelayNode from './components/nodes/DelayNode'
 import { exportCampaignJSON, exportAllEmailsAsZip, exportAsInteractiveHTML, exportSelectedNodesJSON } from './utils/exportUtils'
 import { loadTemplate } from './utils/campaignTemplates'
 import { validateCampaign } from './utils/campaignValidation'
+import { convertEmailsToNodes } from './utils/emailParser'
 import toast, { Toaster } from 'react-hot-toast'
 
 // Define custom node types
@@ -86,6 +88,9 @@ function FlowBuilder() {
   // Import merge dialog
   const [showImportDialog, setShowImportDialog] = useState(false)
   const [pendingImportData, setPendingImportData] = useState(null)
+
+  // Bulk email import dialog
+  const [showBulkImportDialog, setShowBulkImportDialog] = useState(false)
 
   const onConnect = useCallback(
     (params) => {
@@ -391,6 +396,24 @@ function FlowBuilder() {
     setShowImportDialog(false)
     setPendingImportData(null)
   }, [])
+
+  const handleOpenBulkImport = useCallback(() => {
+    setShowBulkImportDialog(true)
+  }, [])
+
+  const handleBulkEmailImport = useCallback((parsedEmails) => {
+    // Convert parsed emails to nodes
+    const newNodes = convertEmailsToNodes(parsedEmails, { x: 100, y: 100 }, id)
+
+    // Add nodes to canvas
+    setNodes(prevNodes => [...prevNodes, ...newNodes])
+    updateIdCounter(newNodes)
+    saveToHistory([...nodes, ...newNodes], edges)
+
+    toast.success(`Imported ${newNodes.length} email${newNodes.length !== 1 ? 's' : ''}!`, {
+      duration: 3000
+    })
+  }, [nodes, edges, setNodes])
 
   const handleLoadTemplate = useCallback((templateKey) => {
     const templateData = loadTemplate(templateKey)
@@ -843,6 +866,7 @@ function FlowBuilder() {
         onSave={handleExportJSON}
         onImport={handleImportJSON}
         onLoadTemplate={handleLoadTemplate}
+        onOpenBulkImport={handleOpenBulkImport}
         onExportEmails={handleExportEmails}
         onExportHTML={handleExportHTML}
         onExportSelection={handleExportSelection}
@@ -957,6 +981,11 @@ function FlowBuilder() {
         onReplace={handleImportReplace}
         onAppend={handleImportAppend}
         importData={pendingImportData}
+      />
+      <BulkEmailImportDialog
+        isOpen={showBulkImportDialog}
+        onClose={() => setShowBulkImportDialog(false)}
+        onImport={handleBulkEmailImport}
       />
     </div>
   )

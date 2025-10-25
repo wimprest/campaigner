@@ -1,0 +1,77 @@
+=== EMAIL START ===
+TITLE: Welcome Email
+DESCRIPTION: First touchpoint in the onboarding series. Focuses on:
+- Value proposition
+- Quick wins
+- Community connection
+SUBJECT_A: Welcome to our platform!
+SUBJECT_B: Get started with your new account
+SUBJECT_C: Your account is ready to go
+CONTENT:
+<p>Hi {{firstName}},</p>
+<p>Welcome to our platform! We're excited to have you on board.</p>
+<p><strong>Here's what you can do next:</strong></p>
+<ul>
+  <li>Complete your profile in just 2 minutes</li>
+  <li>Explore our feature showcase</li>
+  <li>Join our community forum</li>
+</ul>
+<p>Need help getting started? Reply to this email anytime.</p>
+<p>Best regards,<br>The Team</p>
+NOTES: **Send timing:** Immediately after signup
+
+**Key points:**
+1. Keep it warm and welcoming
+2. Focus on immediate value
+3. Include clear CTAs
+
+**Success metrics:**
+- 40%+ open rate target
+- 15%+ click rate target
+=== EMAIL END ===
+
+=== EMAIL START ===
+TITLE: Day 3 Follow-up
+DESCRIPTION: Check-in after initial usage period
+SUBJECT_A: How's it going so far?
+SUBJECT_B: Quick question about your experience
+SUBJECT_C: We'd love your feedback
+CONTENT:
+<p>Hi {{firstName}},</p>
+<p>It's been a few days since you joined, and I wanted to check in personally.</p>
+<p>Have you had a chance to explore the platform? I'm here to help if you have any questions or need guidance.</p>
+<p><strong>Popular features to try:</strong></p>
+<ul>
+  <li>Dashboard customization</li>
+  <li>Team collaboration tools</li>
+  <li>Automated workflows</li>
+</ul>
+<p>Just hit reply and let me know how I can help!</p>
+<p>Cheers,<br>Sarah from the Team</p>
+NOTES: Send 3 days after signup if no activity detected.
+
+Track engagement and adjust timing based on user behavior.
+=== EMAIL END ===
+
+=== EMAIL START ===
+TITLE: Feature Highlight - Automation
+DESCRIPTION: Educational email focusing on automation capabilities
+SUBJECT_A: Save hours with automation
+SUBJECT_B: The feature that changes everything
+CONTENT:
+<p>Hi {{firstName}},</p>
+<p>One of our most powerful features is automation, and I wanted to make sure you're taking advantage of it.</p>
+<p><strong>What you can automate:</strong></p>
+<ol>
+  <li>Repetitive tasks and workflows</li>
+  <li>Email sequences and follow-ups</li>
+  <li>Data synchronization</li>
+  <li>Custom triggers and actions</li>
+</ol>
+<p>Watch this 2-minute video to see it in action: {{videoLink}}</p>
+<p>Or schedule a quick call with our team: {{calendarLink}}</p>
+<p>To your success,<br>The Team</p>
+NOTES: **Segment:** Active users who haven't used automation yet
+
+**Timing:** 7-10 days after signup
+=== EMAIL END ===

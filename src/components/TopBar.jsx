@@ -7,6 +7,7 @@ export default function TopBar({
   onSave,
   onImport,
   onLoadTemplate,
+  onOpenBulkImport,
   onExportEmails,
   onExportHTML,
   onExportSelection,
@@ -192,6 +193,16 @@ export default function TopBar({
                 >
                   <FileJson className="w-4 h-4 mr-2 text-gray-600" />
                   Open File
+                </button>
+                <button
+                  onClick={() => {
+                    onOpenBulkImport()
+                    setShowOpenMenu(false)
+                  }}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center text-sm"
+                >
+                  <Mail className="w-4 h-4 mr-2 text-gray-600" />
+                  Import Emails (Bulk)
                 </button>
                 <div className="border-t border-gray-200 my-1" />
                 <div className="px-4 py-1 text-xs font-medium text-gray-500">

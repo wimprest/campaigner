@@ -7,6 +7,7 @@ import 'react-quill/dist/quill.snow.css'
 import EmailEditorModal from './EmailEditorModal'
 import SurveyTestModal from './SurveyTestModal'
 import toast from 'react-hot-toast'
+import ReactMarkdown from 'react-markdown'
 
 export default function ContentPanel({ node, onUpdate, onClose, onDelete, onDuplicate }) {
   const [localData, setLocalData] = useState(node.data)
@@ -14,6 +15,7 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete, onDupl
   const [emailEditMode, setEmailEditMode] = useState('visual')
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
   const [isSurveyTestModalOpen, setIsSurveyTestModalOpen] = useState(false)
+  const [isEmailImportModalOpen, setIsEmailImportModalOpen] = useState(false)
   const [activeSubjectVariant, setActiveSubjectVariant] = useState('A')
   const [pathValidationWarnings, setPathValidationWarnings] = useState({})
   const [surveyValidationWarnings, setSurveyValidationWarnings] = useState([])
@@ -50,6 +52,45 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete, onDupl
   const handleEmailModalSave = (updatedData) => {
     setLocalData(updatedData)
     setIsEmailModalOpen(false)
+  }
+
+  const handleEmailImport = (parsedEmail) => {
+    // Build subject variants array
+    const subjectVariants = []
+    if (parsedEmail.subjectA) {
+      subjectVariants.push({
+        id: 'A',
+        subject: parsedEmail.subjectA,
+        weight: parsedEmail.subjectB || parsedEmail.subjectC ? 33 : 100
+      })
+    }
+    if (parsedEmail.subjectB) {
+      subjectVariants.push({
+        id: 'B',
+        subject: parsedEmail.subjectB,
+        weight: parsedEmail.subjectC ? 33 : 50
+      })
+    }
+    if (parsedEmail.subjectC) {
+      subjectVariants.push({
+        id: 'C',
+        subject: parsedEmail.subjectC,
+        weight: 34
+      })
+    }
+
+    // Update local data with imported email
+    setLocalData(prev => ({
+      ...prev,
+      label: parsedEmail.title || prev.label,
+      description: parsedEmail.description || prev.description,
+      subject: parsedEmail.subjectA || prev.subject,
+      subjectVariants: subjectVariants.length > 0 ? subjectVariants : prev.subjectVariants,
+      emailContent: parsedEmail.content || prev.emailContent,
+      notes: parsedEmail.notes || prev.notes
+    }))
+
+    toast.success('Email imported successfully!')
   }
 
   const handleChange = (field, value) => {
@@ -338,17 +379,28 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete, onDupl
                     Email Template
                   </label>
                 </div>
-                {/* Quick access button to open EmailEditorModal with template manager
-                    Added in v0.2.1 for easier access to template CRUD operations
-                    Opens same modal as "Expand Editor" but provides direct access from ContentPanel */}
-                <button
-                  onClick={() => setIsEmailModalOpen(true)}
-                  className="flex items-center space-x-1 px-2 py-1 text-xs font-medium text-blue-700 hover:text-blue-900 hover:bg-blue-100 rounded transition-colors"
-                  title="Manage email templates"
-                >
-                  <Settings className="w-3.5 h-3.5" />
-                  <span>Manage</span>
-                </button>
+                <div className="flex items-center space-x-2">
+                  {/* Import Email button - paste formatted email to update this node */}
+                  <button
+                    onClick={() => setIsEmailImportModalOpen(true)}
+                    className="flex items-center space-x-1 px-2 py-1 text-xs font-medium text-green-700 hover:text-green-900 hover:bg-green-100 rounded transition-colors"
+                    title="Import email from formatted text"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Import</span>
+                  </button>
+                  {/* Quick access button to open EmailEditorModal with template manager
+                      Added in v0.2.1 for easier access to template CRUD operations
+                      Opens same modal as "Expand Editor" but provides direct access from ContentPanel */}
+                  <button
+                    onClick={() => setIsEmailModalOpen(true)}
+                    className="flex items-center space-x-1 px-2 py-1 text-xs font-medium text-blue-700 hover:text-blue-900 hover:bg-blue-100 rounded transition-colors"
+                    title="Manage email templates"
+                  >
+                    <Settings className="w-3.5 h-3.5" />
+                    <span>Manage</span>
+                  </button>
+                </div>
               </div>
               <select
                 value={localData.emailTemplate || 'blank'}
@@ -1524,30 +1576,46 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete, onDupl
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description <span className="text-gray-500 font-normal">(not visible to customers)</span>
+              Description <span className="text-gray-500 font-normal">(not visible to customers, markdown supported)</span>
             </label>
             <textarea
               value={localData.description || ''}
               onChange={(e) => handleChange('description', e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Add a description..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+              placeholder="Add a description (supports markdown: **bold**, *italic*, - bullets)..."
             />
+            {localData.description && (
+              <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="text-xs font-medium text-gray-500 mb-1">Preview:</div>
+                <div className="prose prose-sm max-w-none text-gray-700">
+                  <ReactMarkdown>{localData.description}</ReactMarkdown>
+                </div>
+              </div>
+            )}
           </div>
 
           {renderNodeSpecificFields()}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Internal Notes
+              Internal Notes <span className="text-gray-500 font-normal">(markdown supported)</span>
             </label>
             <textarea
               value={localData.notes || ''}
               onChange={(e) => handleChange('notes', e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Add internal notes (not visible to customers)..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+              placeholder="Add internal notes (supports markdown: **bold**, 1. numbered lists, - bullets)..."
             />
+            {localData.notes && (
+              <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="text-xs font-medium text-gray-500 mb-1">Preview:</div>
+                <div className="prose prose-sm max-w-none text-gray-700">
+                  <ReactMarkdown>{localData.notes}</ReactMarkdown>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -1595,6 +1663,15 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete, onDupl
           isOpen={isSurveyTestModalOpen}
           surveyData={localData}
           onClose={() => setIsSurveyTestModalOpen(false)}
+        />
+      )}
+
+      {/* Single Email Import Dialog */}
+      {node.type === 'email' && (
+        <SingleEmailImportDialog
+          isOpen={isEmailImportModalOpen}
+          onClose={() => setIsEmailImportModalOpen(false)}
+          onImport={handleEmailImport}
         />
       )}
     </>
