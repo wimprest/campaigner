@@ -517,11 +517,43 @@ campaign/
 - Delete multiple test nodes at once during campaign cleanup
 - Select entire campaign section for visual review
 
-#### 4. Search & Filter
+#### 4. Search & Filter ✅ COMPLETE
 **Features**:
-- Search nodes by title or content
-- Filter by node type
-- Highlight search results on canvas
+- **Search bar**: Text input in TopBar to search across all node content
+- **Node type filter**: Dropdown to filter by Email, Survey, Conditional, Action, or Delay
+- **Visual highlighting**: Non-matching nodes dimmed to 20% opacity with smooth transition
+- **Results counter**: Shows "X of Y" nodes matching current filters
+- **Clear filters**: X button to reset search and filter to defaults
+- **Smart search**: Searches across multiple fields per node type
+
+**Search Coverage by Node Type**:
+- **All nodes**: Label, description
+- **Email**: Subject (including A/B/C variants), email content
+- **Survey**: Question text, response path labels
+- **Conditional**: Condition text
+- **Action**: Action type
+
+**Visual Design**:
+- Search input with magnifying glass icon
+- Type filter dropdown (select element)
+- Results count appears when filters active
+- Clear button (X icon) removes all filters
+- Smooth opacity transitions (0.2s ease)
+- Centered in TopBar between left and right sections
+
+**Implementation**:
+- `nodeMatchesFilter()` callback checks search term and type
+- Real-time filtering on every keystroke
+- Case-insensitive search with `.toLowerCase()`
+- Nodes mapped with opacity style based on match status
+- Clear filters resets searchTerm to '' and nodeTypeFilter to 'all'
+
+**Use cases**:
+- Find specific email by subject line in large campaign
+- Locate all survey nodes for review
+- Search for nodes containing specific keywords
+- Filter to show only conditional logic for debugging
+- Quickly identify nodes needing attention
 
 #### 5. Version History
 **Features**:
@@ -834,6 +866,7 @@ To add debug logging (optional future feature):
 - **v0.4.1** (Phase 4 - Node Duplication): One-click node duplication with Duplicate button and Ctrl+D/Cmd+D shortcut, smart ID regeneration for complex survey nodes, automatic label updating with "(Copy)" suffix
 - **v0.4.2** (Phase 4 - Bulk Operations): Multi-select with Shift+Drag selection box, Shift+Click additive selection, Ctrl+A select all, bulk duplication and deletion, visual keyboard shortcut tooltip, enhanced selection indicators (ring-8, opacity-75, shadow-2xl)
 - **v0.4.3** (Phase 4 - Save/Open UX Redesign): Traditional file-based save pattern, "Save" button downloads JSON file, auto-save draft to localStorage every 500ms, auto-load draft on app start, "Draft saved" indicator with timestamp, "Load" renamed to "Open", removed "Load from Browser Storage" option (auto-loads now), simplified Export menu (removed "Export as JSON" - now main Save button), "Clear" also clears localStorage draft
+- **v0.4.4** (Phase 4 - Search & Filter): Real-time search bar with magnifying glass icon, node type filter dropdown (All/Email/Survey/Conditional/Action/Delay), visual highlighting with 20% opacity for non-matching nodes, results counter showing "X of Y" nodes, clear filters button, smart search across node labels, descriptions, email subjects/content, survey questions/paths, conditional text, and action types
 
 ---
 
@@ -875,6 +908,6 @@ npm run dev
 
 ---
 
-**Last Updated**: 2025-10-25 (v0.4.3 - Phase 4: Save/Open UX Redesign)
+**Last Updated**: 2025-10-25 (v0.4.4 - Phase 4: Search & Filter Complete)
 **Project**: Campaign Builder
-**Status**: Active Development - Phase 4: 4 of 5 features complete (Toast Notifications, Node Duplication, Bulk Operations, Save/Open Redesign)
+**Status**: Active Development - Phase 4: COMPLETE! ✅ All 5 features done (Toast Notifications, Node Duplication, Bulk Operations, Save/Open Redesign, Search & Filter)

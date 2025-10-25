@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { Save, Upload, Download, Trash2, ChevronDown, FileJson, Mail, Globe, FolderOpen, CheckCircle } from 'lucide-react'
+import { Save, Upload, Download, Trash2, ChevronDown, FileJson, Mail, Globe, FolderOpen, CheckCircle, Search, X, Filter } from 'lucide-react'
 
 export default function TopBar({
   campaignName,
@@ -12,7 +12,14 @@ export default function TopBar({
   onClear,
   onValidate,
   saveStatus,
-  lastSaved
+  lastSaved,
+  searchTerm,
+  onSearchChange,
+  nodeTypeFilter,
+  onFilterChange,
+  onClearFilters,
+  matchingNodesCount,
+  totalNodesCount
 }) {
   const [showExportMenu, setShowExportMenu] = useState(false)
   const [showOpenMenu, setShowOpenMenu] = useState(false)
@@ -99,6 +106,51 @@ export default function TopBar({
                 Draft saved {getLastSavedText()}
               </span>
             )}
+          </div>
+        )}
+      </div>
+
+      {/* Search and Filter */}
+      <div className="flex items-center space-x-2 flex-1 max-w-md mx-4">
+        {/* Search input */}
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search nodes..."
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+
+        {/* Node type filter */}
+        <select
+          value={nodeTypeFilter}
+          onChange={(e) => onFilterChange(e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+        >
+          <option value="all">All Types</option>
+          <option value="email">Email</option>
+          <option value="survey">Survey</option>
+          <option value="conditional">Conditional</option>
+          <option value="action">Action</option>
+          <option value="delay">Delay</option>
+        </select>
+
+        {/* Results count and clear button */}
+        {(searchTerm || nodeTypeFilter !== 'all') && (
+          <div className="flex items-center space-x-2">
+            <span className="text-xs text-gray-600 whitespace-nowrap">
+              {matchingNodesCount} of {totalNodesCount}
+            </span>
+            <button
+              onClick={onClearFilters}
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Clear filters"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
         )}
       </div>

@@ -78,6 +78,10 @@ function FlowBuilder() {
   const [saveStatus, setSaveStatus] = useState('saved') // 'saving' | 'saved'
   const [lastSaved, setLastSaved] = useState(null) // timestamp
 
+  // Search and filter
+  const [searchTerm, setSearchTerm] = useState('')
+  const [nodeTypeFilter, setNodeTypeFilter] = useState('all') // 'all' | 'email' | 'survey' | 'conditional' | 'action' | 'delay'
+
   const onConnect = useCallback(
     (params) => {
       // Find the source node to get path label for survey nodes
@@ -351,6 +355,79 @@ function FlowBuilder() {
       setIsValidationPanelOpen(false)
     }
   }, [nodes, setNodes])
+
+  // Search and filter logic - check if a node matches search/filter criteria
+  const nodeMatchesFilter = useCallback((node) => {
+    // Check node type filter
+    if (nodeTypeFilter !== 'all' && node.type !== nodeTypeFilter) {
+      return false
+    }
+
+    // Check search term
+    if (searchTerm.trim() === '') {
+      return true // No search term = show all
+    }
+
+    const searchLower = searchTerm.toLowerCase()
+
+    // Search in node label
+    if (node.data.label?.toLowerCase().includes(searchLower)) {
+      return true
+    }
+
+    // Search in node description
+    if (node.data.description?.toLowerCase().includes(searchLower)) {
+      return true
+    }
+
+    // Type-specific searches
+    if (node.type === 'email') {
+      // Search in email subject (including variants)
+      if (node.data.subject?.toLowerCase().includes(searchLower)) {
+        return true
+      }
+      if (node.data.subjectVariants?.some(v => v.subject?.toLowerCase().includes(searchLower))) {
+        return true
+      }
+      // Search in email content
+      if (node.data.emailContent?.toLowerCase().includes(searchLower)) {
+        return true
+      }
+    }
+
+    if (node.type === 'survey') {
+      // Search in question text
+      if (node.data.questions?.some(q => q.text?.toLowerCase().includes(searchLower))) {
+        return true
+      }
+      // Search in response path labels
+      if (node.data.responsePaths?.some(p => p.label?.toLowerCase().includes(searchLower))) {
+        return true
+      }
+    }
+
+    if (node.type === 'conditional') {
+      // Search in condition text
+      if (node.data.condition?.toLowerCase().includes(searchLower)) {
+        return true
+      }
+    }
+
+    if (node.type === 'action') {
+      // Search in action type
+      if (node.data.actionType?.toLowerCase().includes(searchLower)) {
+        return true
+      }
+    }
+
+    return false
+  }, [searchTerm, nodeTypeFilter])
+
+  // Clear all filters
+  const clearFilters = useCallback(() => {
+    setSearchTerm('')
+    setNodeTypeFilter('all')
+  }, [])
 
   // Helper function to duplicate a single node
   const duplicateSingleNode = useCallback((nodeToDuplicate) => {
@@ -687,12 +764,31 @@ function FlowBuilder() {
         onValidate={handleValidateCampaign}
         saveStatus={saveStatus}
         lastSaved={lastSaved}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        nodeTypeFilter={nodeTypeFilter}
+        onFilterChange={setNodeTypeFilter}
+        onClearFilters={clearFilters}
+        matchingNodesCount={nodes.filter(nodeMatchesFilter).length}
+        totalNodesCount={nodes.length}
       />
       <div className="flex-1 flex overflow-hidden">
         <Sidebar />
         <div className="flex-1 relative" ref={reactFlowWrapper}>
           <ReactFlow
-            nodes={nodes}
+            nodes={nodes.map(node => {
+              const matches = nodeMatchesFilter(node)
+              const hasActiveFilter = searchTerm.trim() !== '' || nodeTypeFilter !== 'all'
+
+              return {
+                ...node,
+                style: {
+                  ...node.style,
+                  opacity: hasActiveFilter && !matches ? 0.2 : 1,
+                  transition: 'opacity 0.2s ease'
+                }
+              }
+            })}
             edges={edges.map(edge => ({
               ...edge,
               selected: selectedEdge?.id === edge.id,
