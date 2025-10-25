@@ -169,15 +169,21 @@ campaign/
 
 ### 6. Version History ⭐ NEW (v0.7.0)
 - **Save Named Versions** - Create snapshots of your campaign at any point
-  - "Save Version" button in TopBar (indigo)
+  - "History ▼" dropdown in TopBar (indigo) ⭐ UPDATED (v0.7.1)
+  - "Save Current Version" menu item
   - Optional version naming (auto-generates if blank)
   - Stores full campaign state (nodes, edges, metadata)
   - Limit of 20 versions in localStorage (oldest auto-deleted)
 - **Version Management Panel** - View and manage all saved versions
-  - "Versions" button shows count badge (e.g., "Versions 5")
+  - "View Version History" from History menu
+  - Shows count in menu item (e.g., "5 versions saved")
   - Right-side modal panel with chronological version list
   - Metadata display: name, date, campaign name, node/edge counts
   - Sort by timestamp (newest first)
+- **Draft Auto-Save Status** - Visible in History menu
+  - Shows "Draft auto-save: ON ✓"
+  - Displays last saved timestamp
+  - Also shown in header for at-a-glance status
 - **Version Operations**:
   - **Restore**: Load any previous version (replaces current work with confirmation)
   - **Export**: Download individual version as JSON file
@@ -1013,6 +1019,7 @@ To add debug logging (optional future feature):
 - **v0.5.0** (Export Improvements): Readable timestamp filenames (`campaign_name_2025-10-25_13-45-30.json` instead of Unix timestamps), Export Selection feature to export only selected nodes as JSON, Import Merge Dialog with Replace/Append options, smart ID remapping and automatic node offsetting in append mode, comprehensive manifest.json in email ZIP exports listing all files and conversion instructions, toast notifications for all export operations with success messages
 - **v0.6.0** (Email Import Features): Bulk email import from formatted text (Open menu → "Import Emails (Bulk)"), single email import to update existing nodes ("Import" button in ContentPanel), structured text format with delimiters (`=== EMAIL START ===`), automatic A/B/C subject variant configuration, markdown support in Description and Notes fields with live preview, react-markdown library for rendering, emailParser.js utility with parseBulkEmails() and convertEmailsToNodes(), BulkEmailImportDialog with preview, SingleEmailImportDialog for node updates, sample-bulk-emails.txt example file showing proper format
 - **v0.7.0** (Version History): Manual version saving with "Save Version" button (indigo), VersionHistoryPanel component with right-side modal layout, version management operations (restore, export, delete, export all), localStorage storage separate from draft (`campaign-versions` key), auto-load versions on app start, limit of 20 versions with automatic cleanup, version metadata display (name, timestamp, campaign name, node/edge counts), chronological sorting (newest first), "Latest" badge on most recent version, confirmation dialogs for destructive operations, toast notifications for all version operations, "Versions" button with count badge in TopBar
+- **v0.7.1** (UI Consolidation): Consolidated version buttons into "History" dropdown menu to reduce toolbar clutter, combined "Save Version" and "Versions" buttons into single dropdown with two menu items ("Save Current Version", "View Version History"), added draft auto-save status display in History menu (shows "Draft auto-save: ON ✓" and last saved timestamp), version count badge moved to menu item instead of button, cleaner TopBar layout with 5 main buttons instead of 7, improved scalability for narrow windows
 
 ---
 
@@ -1054,6 +1061,6 @@ npm run dev
 
 ---
 
-**Last Updated**: 2025-10-25 (v0.7.0 - Version History)
+**Last Updated**: 2025-10-25 (v0.7.1 - UI Consolidation)
 **Project**: Campaign Builder
-**Status**: Active Development - Phase 4 Complete (UX Polish & Professional Features)
+**Status**: Active Development - Phase 4 Complete, Ready for Email Variables

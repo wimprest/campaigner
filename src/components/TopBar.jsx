@@ -28,6 +28,7 @@ export default function TopBar({
 }) {
   const [showExportMenu, setShowExportMenu] = useState(false)
   const [showOpenMenu, setShowOpenMenu] = useState(false)
+  const [showHistoryMenu, setShowHistoryMenu] = useState(false)
   const [isEditingName, setIsEditingName] = useState(false)
   const fileInputRef = useRef(null)
   const nameInputRef = useRef(null)
@@ -306,28 +307,73 @@ export default function TopBar({
           )}
         </div>
 
-        <button
-          onClick={onSaveVersion}
-          className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
-          title="Save current campaign as a version"
-        >
-          <Clock className="w-4 h-4 mr-2" />
-          Save Version
-        </button>
+        {/* History Menu */}
+        <div className="relative">
+          <button
+            onClick={() => setShowHistoryMenu(!showHistoryMenu)}
+            className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+          >
+            <Clock className="w-4 h-4 mr-2" />
+            History
+            <ChevronDown className="w-4 h-4 ml-1" />
+          </button>
 
-        <button
-          onClick={onOpenVersionHistory}
-          className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
-          title="View and restore saved versions"
-        >
-          <Clock className="w-4 h-4 mr-2" />
-          Versions
-          {versionsCount > 0 && (
-            <span className="ml-1.5 px-1.5 py-0.5 bg-indigo-500 text-white text-xs font-bold rounded">
-              {versionsCount}
-            </span>
+          {showHistoryMenu && (
+            <>
+              <div
+                className="fixed inset-0 z-10"
+                onClick={() => setShowHistoryMenu(false)}
+              />
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                <button
+                  onClick={() => {
+                    onSaveVersion()
+                    setShowHistoryMenu(false)
+                  }}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center text-sm"
+                >
+                  <Clock className="w-4 h-4 mr-2 text-gray-600" />
+                  <div className="flex-1">
+                    <div className="font-medium">Save Current Version</div>
+                    <div className="text-xs text-gray-500">Create a snapshot</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => {
+                    onOpenVersionHistory()
+                    setShowHistoryMenu(false)
+                  }}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center text-sm"
+                >
+                  <Clock className="w-4 h-4 mr-2 text-gray-600" />
+                  <div className="flex-1">
+                    <div className="font-medium">View Version History</div>
+                    <div className="text-xs text-gray-500">
+                      {versionsCount === 0 ? 'No versions saved' : `${versionsCount} version${versionsCount !== 1 ? 's' : ''} saved`}
+                    </div>
+                  </div>
+                  {versionsCount > 0 && (
+                    <span className="ml-2 px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded">
+                      {versionsCount}
+                    </span>
+                  )}
+                </button>
+                <div className="border-t border-gray-200 my-1" />
+                <div className="px-4 py-2 text-xs text-gray-500">
+                  <div className="flex items-center justify-between">
+                    <span>Draft auto-save:</span>
+                    <span className="font-medium text-green-600">ON ✓</span>
+                  </div>
+                  {lastSaved && (
+                    <div className="mt-1 text-gray-400">
+                      Last saved {getLastSavedText()}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
           )}
-        </button>
+        </div>
 
         <button
           onClick={onValidate}
