@@ -339,10 +339,18 @@ function FlowBuilder() {
   const handleValidationIssueClick = useCallback((nodeId) => {
     const node = nodes.find(n => n.id === nodeId)
     if (node) {
+      // Select the node in the ContentPanel
       setSelectedNode(node)
+
+      // Also visually select the node on the flowchart (highlight with colored ring)
+      setNodes((nds) => nds.map(n => ({
+        ...n,
+        selected: n.id === nodeId
+      })))
+
       setIsValidationPanelOpen(false)
     }
-  }, [nodes])
+  }, [nodes, setNodes])
 
   // Helper function to duplicate a single node
   const duplicateSingleNode = useCallback((nodeToDuplicate) => {
