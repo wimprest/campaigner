@@ -18,6 +18,7 @@ import ValidationPanel from './components/ValidationPanel'
 import ImportMergeDialog from './components/ImportMergeDialog'
 import BulkEmailImportDialog from './components/BulkEmailImportDialog'
 import VersionHistoryPanel from './components/VersionHistoryPanel'
+import VariablesManager from './components/VariablesManager'
 import EmailNode from './components/nodes/EmailNode'
 import SurveyNode from './components/nodes/SurveyNode'
 import ConditionalNode from './components/nodes/ConditionalNode'
@@ -96,6 +97,10 @@ function FlowBuilder() {
   // Version history
   const [versions, setVersions] = useState([])
   const [showVersionPanel, setShowVersionPanel] = useState(false)
+
+  // Campaign variables
+  const [variables, setVariables] = useState([])
+  const [showVariablesManager, setShowVariablesManager] = useState(false)
 
   const onConnect = useCallback(
     (params) => {
@@ -571,6 +576,12 @@ function FlowBuilder() {
     toast.success(`Exported ${versions.length} versions`, { icon: '📦', duration: 3000 })
   }, [versions, campaignName])
 
+  // Variables Management
+  const handleUpdateVariables = useCallback((updatedVariables) => {
+    setVariables(updatedVariables)
+    localStorage.setItem('campaign-variables', JSON.stringify(updatedVariables))
+  }, [])
+
   const clearCanvas = useCallback(() => {
     if (window.confirm('Are you sure you want to clear the entire canvas? This will also delete the auto-saved draft from browser storage.')) {
       setNodes([])
@@ -981,6 +992,17 @@ function FlowBuilder() {
         console.error('Failed to load version history:', error)
       }
     }
+
+    // Load campaign variables
+    const savedVariables = localStorage.getItem('campaign-variables')
+    if (savedVariables) {
+      try {
+        const variablesData = JSON.parse(savedVariables)
+        setVariables(variablesData)
+      } catch (error) {
+        console.error('Failed to load variables:', error)
+      }
+    }
   }, []) // Run only once on mount
 
   // Auto-save draft to localStorage when campaign changes
@@ -1030,6 +1052,8 @@ function FlowBuilder() {
         onOpenVersionHistory={() => setShowVersionPanel(true)}
         onSaveVersion={handleSaveVersion}
         versionsCount={versions.length}
+        onOpenVariables={() => setShowVariablesManager(true)}
+        variablesCount={variables.length}
         saveStatus={saveStatus}
         lastSaved={lastSaved}
         searchTerm={searchTerm}
@@ -1122,6 +1146,7 @@ function FlowBuilder() {
             onClose={() => setSelectedNode(null)}
             onDelete={deleteNode}
             onDuplicate={handleDuplicateNode}
+            variables={variables}
           />
         )}
       </div>
@@ -1153,6 +1178,12 @@ function FlowBuilder() {
         onDelete={handleDeleteVersion}
         onExport={handleExportVersion}
         onExportAll={handleExportAllVersions}
+      />
+      <VariablesManager
+        isOpen={showVariablesManager}
+        onClose={() => setShowVariablesManager(false)}
+        variables={variables}
+        onUpdate={handleUpdateVariables}
       />
     </div>
   )

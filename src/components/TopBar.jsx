@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { Save, Upload, Download, Trash2, ChevronDown, FileJson, Mail, Globe, FolderOpen, CheckCircle, Search, X, Filter, FileCheck, Clock } from 'lucide-react'
+import { Save, Upload, Download, Trash2, ChevronDown, FileJson, Mail, Globe, FolderOpen, CheckCircle, Search, X, Filter, FileCheck, Clock, Variable } from 'lucide-react'
 
 export default function TopBar({
   campaignName,
@@ -16,6 +16,8 @@ export default function TopBar({
   onOpenVersionHistory,
   onSaveVersion,
   versionsCount,
+  onOpenVariables,
+  variablesCount,
   saveStatus,
   lastSaved,
   searchTerm,
@@ -374,6 +376,20 @@ export default function TopBar({
             </>
           )}
         </div>
+
+        <button
+          onClick={onOpenVariables}
+          className="flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium"
+          title="Manage campaign variables"
+        >
+          <Variable className="w-4 h-4 mr-2" />
+          Variables
+          {variablesCount > 0 && (
+            <span className="ml-1.5 px-1.5 py-0.5 bg-teal-500 text-white text-xs font-bold rounded">
+              {variablesCount}
+            </span>
+          )}
+        </button>
 
         <button
           onClick={onValidate}

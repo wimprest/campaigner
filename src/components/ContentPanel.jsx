@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { X, Plus, Trash, Mail, ChevronDown, ChevronUp, Maximize2, Settings, Play, AlertTriangle, Copy, Upload } from 'lucide-react'
+import React, { useState, useEffect, useRef } from 'react'
+import { X, Plus, Trash, Mail, ChevronDown, ChevronUp, Maximize2, Settings, Play, AlertTriangle, Copy, Upload, Variable, Eye } from 'lucide-react'
 import { emailTemplates, getTemplateList } from '../utils/emailTemplates'
 import { validateSurvey } from '../utils/surveyLogic'
 import ReactQuill from 'react-quill'
@@ -10,7 +10,7 @@ import SingleEmailImportDialog from './SingleEmailImportDialog'
 import toast from 'react-hot-toast'
 import ReactMarkdown from 'react-markdown'
 
-export default function ContentPanel({ node, onUpdate, onClose, onDelete, onDuplicate }) {
+export default function ContentPanel({ node, onUpdate, onClose, onDelete, onDuplicate, variables = [] }) {
   const [localData, setLocalData] = useState(node.data)
   const [expandedQuestions, setExpandedQuestions] = useState(new Set())
   const [emailEditMode, setEmailEditMode] = useState('visual')
@@ -19,6 +19,9 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete, onDupl
   const [isEmailImportModalOpen, setIsEmailImportModalOpen] = useState(false)
   const [activeSubjectVariant, setActiveSubjectVariant] = useState('A')
   const [pathValidationWarnings, setPathValidationWarnings] = useState({})
+  const [showVariableDropdown, setShowVariableDropdown] = useState(false)
+  const [emailPreviewMode, setEmailPreviewMode] = useState(false)
+  const quillRef = useRef(null)
   const [surveyValidationWarnings, setSurveyValidationWarnings] = useState([])
 
   useEffect(() => {
@@ -99,6 +102,30 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete, onDupl
       ...prev,
       [field]: value,
     }))
+  }
+
+  // Variable insertion for email editor
+  const insertVariable = (variableName) => {
+    const quill = quillRef.current?.getEditor()
+    if (quill) {
+      const selection = quill.getSelection()
+      const cursorPosition = selection ? selection.index : quill.getLength()
+      quill.insertText(cursorPosition, `{{${variableName}}}`)
+      quill.setSelection(cursorPosition + variableName.length + 4)
+    }
+    setShowVariableDropdown(false)
+    toast.success(`Variable {{${variableName}}} inserted!`)
+  }
+
+  // Replace variables with default values for preview
+  const replaceVariablesWithDefaults = (content) => {
+    if (!content) return content
+    let previewContent = content
+    variables.forEach(variable => {
+      const regex = new RegExp(`\\{\\{${variable.name}\\}\\}`, 'g')
+      previewContent = previewContent.replace(regex, variable.defaultValue || `{{${variable.name}}}`)
+    })
+    return previewContent
   }
 
   // Survey question management
@@ -557,53 +584,148 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete, onDupl
                 <label className="block text-sm font-medium text-gray-700">
                   Email Content {!localData.mjmlTemplate && '(used if no template selected)'}
                 </label>
-                <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
-                  <button
-                    onClick={() => setEmailEditMode('visual')}
-                    className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                      emailEditMode === 'visual'
-                        ? 'bg-white text-blue-600 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    Visual
-                  </button>
-                  <button
-                    onClick={() => setEmailEditMode('code')}
-                    className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                      emailEditMode === 'code'
-                        ? 'bg-white text-blue-600 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    Code
-                  </button>
+                <div className="flex items-center space-x-2">
+                  {/* Insert Variable Dropdown */}
+                  {!emailPreviewMode && emailEditMode === 'visual' && (
+                    <div className="relative">
+                      <button
+                        onClick={() => setShowVariableDropdown(!showVariableDropdown)}
+                        className="flex items-center px-2 py-1 text-xs font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 rounded transition-colors"
+                        title="Insert variable"
+                      >
+                        <Variable className="w-3.5 h-3.5 mr-1" />
+                        Insert Variable
+                        <ChevronDown className="w-3 h-3 ml-1" />
+                      </button>
+
+                      {showVariableDropdown && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-10"
+                            onClick={() => setShowVariableDropdown(false)}
+                          />
+                          <div className="absolute left-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 max-h-64 overflow-y-auto">
+                            {variables.length === 0 ? (
+                              <div className="px-4 py-3 text-xs text-gray-500 text-center">
+                                <Variable className="w-8 h-8 text-gray-300 mx-auto mb-1" />
+                                No variables defined yet
+                                <div className="mt-1 text-gray-400">Click Variables button in toolbar</div>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="px-3 py-1 text-xs font-semibold text-gray-500 border-b border-gray-200">
+                                  Click to insert:
+                                </div>
+                                {variables.map(variable => (
+                                  <button
+                                    key={variable.id}
+                                    onClick={() => insertVariable(variable.name)}
+                                    className="w-full text-left px-3 py-2 hover:bg-teal-50 transition-colors"
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <code className="text-xs font-mono text-teal-700 font-semibold">
+                                        {'{{'}{variable.name}{'}}'}
+                                      </code>
+                                      {variable.defaultValue && (
+                                        <span className="text-xs text-gray-400">
+                                          → {variable.defaultValue.length > 15 ? variable.defaultValue.substring(0, 15) + '...' : variable.defaultValue}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {variable.description && (
+                                      <div className="text-xs text-gray-500 mt-0.5">{variable.description}</div>
+                                    )}
+                                  </button>
+                                ))}
+                              </>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Preview Toggle */}
+                  {variables.length > 0 && (
+                    <button
+                      onClick={() => setEmailPreviewMode(!emailPreviewMode)}
+                      className={`flex items-center px-2 py-1 text-xs font-medium rounded transition-colors ${
+                        emailPreviewMode
+                          ? 'bg-purple-600 text-white'
+                          : 'text-purple-700 bg-purple-50 hover:bg-purple-100'
+                      }`}
+                      title={emailPreviewMode ? 'Exit preview mode' : 'Preview with variable values'}
+                    >
+                      <Eye className="w-3.5 h-3.5 mr-1" />
+                      {emailPreviewMode ? 'Exit Preview' : 'Preview'}
+                    </button>
+                  )}
+
+                  {/* Visual/Code Toggle */}
+                  <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
+                    <button
+                      onClick={() => setEmailEditMode('visual')}
+                      className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                        emailEditMode === 'visual'
+                          ? 'bg-white text-blue-600 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      Visual
+                    </button>
+                    <button
+                      onClick={() => setEmailEditMode('code')}
+                      className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                        emailEditMode === 'code'
+                          ? 'bg-white text-blue-600 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      Code
+                    </button>
+                  </div>
                 </div>
               </div>
 
               {emailEditMode === 'visual' ? (
-                <div className="border border-gray-300 rounded-lg overflow-hidden">
-                  <ReactQuill
-                    value={localData.emailContent || ''}
-                    onChange={(content) => handleChange('emailContent', content)}
-                    theme="snow"
-                    style={{
-                      minHeight: localData.mjmlTemplate ? '150px' : '250px',
-                      backgroundColor: 'white'
-                    }}
-                    modules={{
-                      toolbar: [
-                        [{ 'header': [1, 2, 3, false] }],
-                        ['bold', 'italic', 'underline', 'strike'],
-                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                        [{ 'color': [] }, { 'background': [] }],
-                        ['link', 'image'],
-                        ['clean']
-                      ]
-                    }}
-                    placeholder="Write your email content here..."
-                  />
-                </div>
+                <>
+                  {emailPreviewMode ? (
+                    <div className="border border-purple-300 bg-purple-50 rounded-lg p-4">
+                      <div className="flex items-center mb-2">
+                        <Eye className="w-4 h-4 text-purple-600 mr-2" />
+                        <span className="text-xs font-semibold text-purple-700">Preview Mode - Variables Replaced</span>
+                      </div>
+                      <div
+                        className="prose prose-sm max-w-none bg-white rounded p-3 border border-purple-200"
+                        dangerouslySetInnerHTML={{ __html: replaceVariablesWithDefaults(localData.emailContent) }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="border border-gray-300 rounded-lg overflow-hidden">
+                      <ReactQuill
+                        ref={quillRef}
+                        value={localData.emailContent || ''}
+                        onChange={(content) => handleChange('emailContent', content)}
+                        theme="snow"
+                        style={{
+                          minHeight: localData.mjmlTemplate ? '150px' : '250px',
+                          backgroundColor: 'white'
+                        }}
+                        modules={{
+                          toolbar: [
+                            [{ 'header': [1, 2, 3, false] }],
+                            ['bold', 'italic', 'underline', 'strike'],
+                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                            [{ 'color': [] }, { 'background': [] }],
+                            ['link', 'image'],
+                            ['clean']
+                          ]
+                        }}
+                        placeholder="Write your email content here..."
+                      />
+                    </div>
+                  )}
+                </>
               ) : (
                 <textarea
                   value={localData.emailContent || ''}
@@ -614,9 +736,11 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete, onDupl
                 />
               )}
               <p className="text-xs text-gray-600 mt-1">
-                {emailEditMode === 'visual'
-                  ? 'Rich text editor with formatting options'
-                  : 'Plain text or HTML code view'}
+                {emailPreviewMode
+                  ? `Preview with ${variables.length} variable${variables.length !== 1 ? 's' : ''} replaced by default values`
+                  : emailEditMode === 'visual'
+                    ? 'Rich text editor with formatting options'
+                    : 'Plain text or HTML code view'}
               </p>
             </div>
 
@@ -1655,6 +1779,7 @@ export default function ContentPanel({ node, onUpdate, onClose, onDelete, onDupl
           node={{ ...node, data: localData }}
           onSave={handleEmailModalSave}
           onClose={() => setIsEmailModalOpen(false)}
+          variables={variables}
         />
       )}
 
