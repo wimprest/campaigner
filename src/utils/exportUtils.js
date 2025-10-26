@@ -996,88 +996,87 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
     }
 
     function renderNodeContent(node) {
-      let html = \`<div class="field">
-        <div class="field-label">Node Type</div>
-        <div class="field-value">\${node.type.toUpperCase()}</div>
-      </div>\`;
+      let html = '<div class="field">';
+      html += '<div class="field-label">Node Type</div>';
+      html += '<div class="field-value">' + node.type.toUpperCase() + '</div>';
+      html += '</div>';
 
       if (node.data.description) {
-        html += \`<div class="field">
-          <div class="field-label">Description</div>
-          <div class="field-value">\${formatMarkdown(node.data.description)}</div>
-        </div>\`;
+        html += '<div class="field">';
+        html += '<div class="field-label">Description</div>';
+        html += '<div class="field-value">' + formatMarkdown(node.data.description) + '</div>';
+        html += '</div>';
       }
 
       if (node.data.notes) {
-        html += \`<div class="field">
-          <div class="field-label">Notes</div>
-          <div class="field-value">\${formatMarkdown(node.data.notes)}</div>
-        </div>\`;
+        html += '<div class="field">';
+        html += '<div class="field-label">Notes</div>';
+        html += '<div class="field-value">' + formatMarkdown(node.data.notes) + '</div>';
+        html += '</div>';
       }
 
       switch (node.type) {
         case 'email':
           if (node.data.subject) {
-            html += \`<div class="field">
-              <div class="field-label">Subject</div>
-              <div class="field-value">\${node.data.subject}</div>
-            </div>\`;
+            html += '<div class="field">';
+            html += '<div class="field-label">Subject</div>';
+            html += '<div class="field-value">' + node.data.subject + '</div>';
+            html += '</div>';
           }
           if (node.data.emailContent) {
-            html += \`<div class="field">
-              <div class="field-label">Content</div>
-              <div class="field-value">\${stripHtml(node.data.emailContent)}</div>
-            </div>\`;
+            html += '<div class="field">';
+            html += '<div class="field-label">Content</div>';
+            html += '<div class="field-value">' + stripHtml(node.data.emailContent) + '</div>';
+            html += '</div>';
           }
           break;
 
         case 'survey':
           if (node.data.questions?.length) {
-            html += \`<div class="field">
-              <div class="field-label">Questions</div>\`;
+            html += '<div class="field"><div class="field-label">Questions</div>';
             node.data.questions.forEach((q, idx) => {
-              html += \`<div class="question-item">
-                <div class="question-text">\${idx + 1}. \${q.text}</div>
-                <div style="font-size:11px; color:#666; margin-bottom:6px;">Type: \${q.questionType}</div>\`;
+              html += '<div class="question-item">';
+              html += '<div class="question-text">' + (idx + 1) + '. ' + q.text + '</div>';
+              html += '<div style="font-size:11px; color:#666; margin-bottom:6px;">Type: ' + q.questionType + '</div>';
               if (q.responseOptions?.length) {
                 q.responseOptions.forEach(opt => {
-                  html += \`<div class="option">• \${opt.text}</div>\`;
+                  html += '<div class="option">• ' + opt.text + '</div>';
                 });
               }
-              html += \`</div>\`;
+              html += '</div>';
             });
-            html += \`</div>\`;
+            html += '</div>';
           }
           break;
 
         case 'conditional':
           if (node.data.condition) {
-            html += \`<div class="field">
-              <div class="field-label">Condition</div>
-              <div class="field-value">\${formatMarkdown(node.data.condition)}</div>
-            </div>\`;
+            html += '<div class="field">';
+            html += '<div class="field-label">Condition</div>';
+            html += '<div class="field-value">' + formatMarkdown(node.data.condition) + '</div>';
+            html += '</div>';
           }
           break;
 
         case 'delay':
-          html += \`<div class="field">
-            <div class="field-label">Duration</div>
-            <div class="field-value">\${node.data.delayDuration || 0} \${node.data.delayUnit || 'days'}</div>
-          </div>\`;
+          html += '<div class="field">';
+          html += '<div class="field-label">Duration</div>';
+          html += '<div class="field-value">' + (node.data.delayDuration || 0) + ' ' + (node.data.delayUnit || 'days') + '</div>';
+          html += '</div>';
           break;
 
         case 'action':
           if (node.data.actionType) {
-            html += \`<div class="field">
-              <div class="field-label">Action Type</div>
-              <div class="field-value">\${node.data.actionType}</div>
-            </div>\`;
+            html += '<div class="field">';
+            html += '<div class="field-label">Action Type</div>';
+            html += '<div class="field-value">' + node.data.actionType + '</div>';
+            html += '</div>';
           }
           if (node.data.actionDetails) {
-            html += \`<div class="field">
-              <div class="field-label">Details</div>
-              <div class="field-value">\${formatMarkdown(node.data.actionDetails)}</div>
-            </div>\`;
+            html += '<div class="field">';
+            html += '<div class="field-label">Details</div>';
+            html += '<div class="field-value">' + formatMarkdown(node.data.actionDetails) + '</div>';
+            html += '</div>';
           }
           break;
       }
@@ -1087,21 +1086,22 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
       const incoming = campaignData.edges.filter(e => e.target === node.id);
 
       if (outgoing.length || incoming.length) {
-        html += \`<div class="field">
-          <div class="field-label">Connections</div>\`;
+        html += '<div class="field"><div class="field-label">Connections</div>';
         if (incoming.length) {
-          html += \`<div style="font-size:12px; color:#666; margin-bottom:4px;">← From: \${incoming.map(e => {
+          const fromNodes = incoming.map(e => {
             const n = campaignData.nodes.find(n => n.id === e.source);
             return n?.data.label || e.source;
-          }).join(', ')}</div>\`;
+          }).join(', ');
+          html += '<div style="font-size:12px; color:#666; margin-bottom:4px;">← From: ' + fromNodes + '</div>';
         }
         if (outgoing.length) {
-          html += \`<div style="font-size:12px; color:#666;">→ To: \${outgoing.map(e => {
+          const toNodes = outgoing.map(e => {
             const n = campaignData.nodes.find(n => n.id === e.target);
             return n?.data.label || e.target;
-          }).join(', ')}</div>\`;
+          }).join(', ');
+          html += '<div style="font-size:12px; color:#666;">→ To: ' + toNodes + '</div>';
         }
-        html += \`</div>\`;
+        html += '</div>';
       }
 
       return html;
