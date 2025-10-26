@@ -1146,8 +1146,6 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
     function formatMarkdown(text) {
       if (!text) return '';
 
-      console.log('formatMarkdown input length:', text.length, 'First 100 chars:', text.substring(0, 100));
-
       // Convert markdown to HTML - using string replace for special chars to avoid regex issues
       let html = text;
 
@@ -1182,11 +1180,6 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
 
       // Split by newlines to handle lists and paragraphs
       const lines = html.split(String.fromCharCode(10));
-      console.log('formatMarkdown split into', lines.length, 'lines');
-      if (lines.length > 1) {
-        console.log('Line 1:', lines[0]);
-        console.log('Line 2:', lines[1]);
-      }
       const processedLines = [];
       let inList = false;
       let listType = null;
