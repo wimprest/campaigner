@@ -1,0 +1,2823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>DMS 101 Drip Campaign - Mobile Viewer</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    /* Header */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(10px);
+      padding: 12px 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 18px;
+      color: #333;
+      font-weight: 600;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .stats {
+      display: flex;
+      gap: 12px;
+      font-size: 12px;
+      color: #666;
+      align-items: center;
+    }
+
+    .stat-badge {
+      background: #f0f0f0;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+
+    /* Canvas Container */
+    .canvas-container {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      right: 0;
+      bottom: 60px;
+      overflow: hidden;
+    }
+
+    .canvas {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      cursor: grab;
+      transform-origin: 0 0;
+    }
+
+    .canvas.dragging {
+      cursor: grabbing;
+    }
+
+    /* Nodes */
+    .node {
+      position: absolute;
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      min-width: 200px;
+      max-width: 280px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: 2px solid transparent;
+    }
+
+    .node:active {
+      transform: scale(0.98);
+    }
+
+    .node-email { border-color: #2196F3; }
+    .node-survey { border-color: #4CAF50; }
+    .node-conditional { border-color: #9C27B0; }
+    .node-action { border-color: #FF9800; }
+    .node-delay { border-color: #F44336; }
+
+    .node-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .node-type-badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
+      margin-right: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-email { background: #2196F3; }
+    .badge-survey { background: #4CAF50; }
+    .badge-conditional { background: #9C27B0; }
+    .badge-action { background: #FF9800; }
+    .badge-delay { background: #F44336; }
+
+    .node-label {
+      font-weight: 600;
+      font-size: 14px;
+      color: #333;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .node-preview {
+      font-size: 12px;
+      color: #666;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      line-height: 1.4;
+    }
+
+    /* Connections */
+    svg.connections {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .edge {
+      stroke: #999;
+      stroke-width: 2;
+      fill: none;
+      marker-end: url(#arrowhead);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 2000;
+      backdrop-filter: blur(4px);
+      animation: fadeIn 0.2s;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal {
+      background: white;
+      border-radius: 16px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: slideUp 0.3s;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header {
+      padding: 20px;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: white;
+      z-index: 1;
+      border-radius: 16px 16px 0 0;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .close-btn {
+      background: #f0f0f0;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .close-btn:active {
+      background: #e0e0e0;
+    }
+
+    .modal-content {
+      padding: 20px;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field-label {
+      font-weight: 600;
+      font-size: 12px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .field-value {
+      color: #333;
+      font-size: 14px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .question-item {
+      background: #f8f8f8;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+
+    .question-text {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .option {
+      padding: 6px 12px;
+      background: white;
+      border-radius: 6px;
+      margin: 4px 0;
+      font-size: 13px;
+    }
+
+    .path-item {
+      background: #f0f0f0;
+      padding: 10px;
+      border-radius: 8px;
+      margin: 8px 0;
+      border-left: 3px solid #999;
+    }
+
+    /* Footer Controls */
+    .footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(10px);
+      padding: 12px 16px;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+      border-top: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      align-items: center;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .control-btn {
+      background: white;
+      border: 1px solid #ddd;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .control-btn:active {
+      transform: scale(0.95);
+      background: #f0f0f0;
+    }
+
+    .zoom-level {
+      font-size: 13px;
+      color: #666;
+      font-weight: 500;
+      min-width: 50px;
+      text-align: center;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      h1 { font-size: 16px; }
+      .stats { font-size: 11px; gap: 8px; }
+      .stat-badge { padding: 3px 6px; }
+      .node {
+        min-width: 220px !important;
+        max-width: 320px !important;
+        padding: 16px !important;
+        font-size: 14px;
+      }
+      .node-label { font-size: 14px !important; }
+      .node-preview { font-size: 12px !important; }
+      .control-btn { padding: 10px 14px; font-size: 14px; }
+    }
+
+    /* Loading */
+    .loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 18px;
+      font-weight: 600;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="loading" id="loading">Loading campaign...</div>
+
+  <div class="header" id="header" style="display:none;">
+    <div class="header-content">
+      <h1 id="campaignName">DMS 101 Drip Campaign</h1>
+      <div class="stats">
+        <span class="stat-badge" id="nodeCount">20 nodes</span>
+        <span class="stat-badge" id="edgeCount">31 edges</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="canvas-container" style="display:none;">
+    <div class="canvas" id="canvas">
+      <svg class="connections" id="connections"></svg>
+      <div id="nodes"></div>
+    </div>
+  </div>
+
+  <div class="footer" id="footer" style="display:none;">
+    <div class="controls">
+      <button class="control-btn" onclick="resetView()">↺ Reset</button>
+      <button class="control-btn" onclick="zoomOut()">−</button>
+      <span class="zoom-level" id="zoomLevel">100%</span>
+      <button class="control-btn" onclick="zoomIn()">+</button>
+      <button class="control-btn" onclick="fitToView()">⤢ Fit</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <span class="modal-title" id="modalTitle"></span>
+        <button class="close-btn" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-content" id="modalContent"></div>
+    </div>
+  </div>
+
+  <script>
+    // Campaign Data
+    const campaignData = {
+  "nodes": [
+    {
+      "id": "node_0",
+      "type": "email",
+      "position": {
+        "x": -96.58906678394561,
+        "y": -258.4838941369411
+      },
+      "data": {
+        "label": "Email Node",
+        "content": "",
+        "description": "",
+        "subject": "The 4 stages of document chaos (you're probably in #2)",
+        "emailContent": "<p>Hi Wim,</p><p>Research shows disorganized data can cost businesses 20-30% of their annual revenue.</p><p>That number surprised us, too. But when you add up:</p><ul><li>Hours spent searching for files</li><li>Duplicate work because no one can find the original</li><li>Missed deadlines from version control chaos</li><li>Security risks from uncontrolled access</li></ul><p>...it starts to make sense.</p><p><strong>Most companies are stuck between Stage 2 and Stage 3 of document maturity</strong> - organized enough to avoid crisis, but not enough to stop the productivity drain.</p><p><strong>Where are you?</strong></p><p>Take our Quick Document Health Check - <strong>three simple questions (15 seconds each)</strong> that help you identify:</p><ul><li>Your current document maturity stage</li><li>What your document chaos is actually costing</li><li>Your biggest obstacle to fixing it</li></ul><p>After each question, you'll get personalized insights specific to your answer - not generic advice, but targeted recommendations for your situation.</p><p><strong>[TAKE THE QUICK ASSESSMENT →]</strong></p><p><strong>Total time:</strong> About 3 minutes spread across the next week. Each answer unlocks specific insights you can use immediately.</p><p>Best,</p><p>Allie and the DX Team</p><p>P.S. - This isn't a sales pitch. It's a diagnostic tool. You'll learn something useful regardless of whether DocuXplorer is a fit for you.</p>",
+        "subjectVariants": [
+          {
+            "id": "A",
+            "subject": "The 4 stages of document chaos (you're probably in #2)",
+            "weight": 33
+          },
+          {
+            "id": "B",
+            "subject": "Where does your team waste the most time? ⏰",
+            "weight": 33
+          },
+          {
+            "id": "C",
+            "subject": "Quick question: Where are your files right now",
+            "weight": 34
+          }
+        ]
+      },
+      "width": 250,
+      "height": 166,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -96.58906678394561,
+        "y": -258.4838941369411
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_1",
+      "type": "survey",
+      "position": {
+        "x": -111.16461858475259,
+        "y": -64.48559489451735
+      },
+      "data": {
+        "label": "Document Chaos Stages",
+        "content": "",
+        "description": "",
+        "questions": [
+          {
+            "id": "q_1",
+            "text": "Where do your critical documents primarily live today?",
+            "questionType": "radio",
+            "responseOptions": [
+              {
+                "id": "q_1_opt_1",
+                "text": "Scattered across email attachments",
+                "points": 0
+              },
+              {
+                "id": "q_1_opt_2",
+                "text": "Multiple shared drives or servers",
+                "points": 0
+              },
+              {
+                "id": "q_1_opt_1760468398878",
+                "text": "Central system but still lots of manual work",
+                "points": 0
+              },
+              {
+                "id": "q_1_opt_1760468400788",
+                "text": "Automated system with workflows",
+                "points": 0
+              },
+              {
+                "id": "q_1_opt_1760468403544",
+                "text": "Honestly, I'm not sure",
+                "points": 0
+              }
+            ]
+          }
+        ],
+        "responsePaths": [
+          {
+            "id": "path_1",
+            "label": "Path 1",
+            "mappedOptions": [
+              "q_1_opt_1"
+            ],
+            "color": "#10b981",
+            "scoreMin": null,
+            "scoreMax": null,
+            "advancedRules": {
+              "enabled": false,
+              "requireAll": [],
+              "requireAny": [],
+              "requireNone": []
+            }
+          },
+          {
+            "id": "path_2",
+            "label": "Path 2",
+            "mappedOptions": [
+              "q_1_opt_2"
+            ],
+            "color": "#3b82f6",
+            "scoreMin": null,
+            "scoreMax": null,
+            "advancedRules": {
+              "enabled": false,
+              "requireAll": [],
+              "requireAny": [],
+              "requireNone": []
+            }
+          },
+          {
+            "id": "path_1760468505582",
+            "label": "Path 3",
+            "mappedOptions": [
+              "q_1_opt_1760468398878"
+            ],
+            "color": "#f59e0b"
+          },
+          {
+            "id": "path_1760468505814",
+            "label": "Path 4",
+            "mappedOptions": [
+              "q_1_opt_1760468400788"
+            ],
+            "color": "#ef4444"
+          },
+          {
+            "id": "path_1760468506048",
+            "label": "Path 5",
+            "mappedOptions": [
+              "q_1_opt_1760468403544"
+            ],
+            "color": "#8b5cf6"
+          }
+        ]
+      },
+      "width": 280,
+      "height": 288,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -111.16461858475259,
+        "y": -64.48559489451735
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_6",
+      "type": "email",
+      "position": {
+        "x": 507.66186750248005,
+        "y": 314.2259642261252
+      },
+      "data": {
+        "label": "Email Node",
+        "content": "",
+        "description": "",
+        "subject": "",
+        "emailContent": "<p><br></p>",
+        "subjectVariants": [
+          {
+            "id": "A",
+            "subject": "",
+            "weight": 33
+          },
+          {
+            "id": "B",
+            "subject": "",
+            "weight": 33
+          },
+          {
+            "id": "C",
+            "subject": "",
+            "weight": 34
+          }
+        ]
+      },
+      "width": 200,
+      "height": 130,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 507.66186750248005,
+        "y": 314.2259642261252
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_8",
+      "type": "survey",
+      "position": {
+        "x": -109.05317797755413,
+        "y": 800.0272143939666
+      },
+      "data": {
+        "label": "Process Bottleneck ",
+        "content": "",
+        "description": "This is to determine their biggest perceived pain point and what may need to be addressed in the first call/meeting. ",
+        "questions": [
+          {
+            "id": "q_1",
+            "text": "What's your biggest document-related bottleneck?",
+            "questionType": "radio",
+            "responseOptions": [
+              {
+                "id": "q_1_opt_1",
+                "text": "Searching for documents/information",
+                "points": 0
+              },
+              {
+                "id": "q_1_opt_2",
+                "text": "Manual data entry and filing",
+                "points": 0
+              },
+              {
+                "id": "q_1_opt_1761329835005",
+                "text": "Approval workflows and routing",
+                "points": 0
+              },
+              {
+                "id": "q_1_opt_1761329835193",
+                "text": "Version control and collaboration",
+                "points": 0
+              },
+              {
+                "id": "q_1_opt_1761329835439",
+                "text": "Something else (share below)",
+                "points": 0,
+                "allowsTextInput": true
+              }
+            ]
+          }
+        ],
+        "responsePaths": [
+          {
+            "id": "path_1",
+            "label": "Path 1",
+            "mappedOptions": [
+              "q_1_opt_1"
+            ],
+            "color": "#10b981",
+            "scoreMin": null,
+            "scoreMax": null,
+            "advancedRules": {
+              "enabled": false,
+              "requireAll": [],
+              "requireAny": [],
+              "requireNone": []
+            },
+            "rangeConditions": [
+              {
+                "id": "range_cond_1760554418822",
+                "questionId": "q_1",
+                "operator": "lte",
+                "minValue": null,
+                "maxValue": null,
+                "value": 100
+              }
+            ]
+          },
+          {
+            "id": "path_2",
+            "label": "Path 2",
+            "mappedOptions": [
+              "q_1_opt_2"
+            ],
+            "color": "#3b82f6",
+            "scoreMin": null,
+            "scoreMax": null,
+            "advancedRules": {
+              "enabled": false,
+              "requireAll": [],
+              "requireAny": [],
+              "requireNone": []
+            },
+            "rangeConditions": [
+              {
+                "id": "range_cond_1760554438034",
+                "questionId": "q_1",
+                "operator": "between",
+                "minValue": 101,
+                "maxValue": 500,
+                "value": null
+              }
+            ]
+          },
+          {
+            "id": "path_1760554384279",
+            "label": "Path 3",
+            "mappedOptions": [
+              "q_1_opt_1761329835005"
+            ],
+            "color": "#f59e0b",
+            "scoreMin": null,
+            "scoreMax": null,
+            "rangeConditions": [
+              {
+                "id": "range_cond_1760554451850",
+                "questionId": "q_1",
+                "operator": "gte",
+                "minValue": null,
+                "maxValue": null,
+                "value": 501
+              }
+            ],
+            "advancedRules": {
+              "enabled": false,
+              "requireAll": [],
+              "requireAny": [],
+              "requireNone": []
+            }
+          },
+          {
+            "id": "path_1761330382397",
+            "label": "Path 4",
+            "mappedOptions": [
+              "q_1_opt_1761329835193"
+            ],
+            "color": "#ef4444",
+            "scoreMin": null,
+            "scoreMax": null,
+            "rangeConditions": [],
+            "advancedRules": {
+              "enabled": false,
+              "requireAll": [],
+              "requireAny": [],
+              "requireNone": []
+            }
+          },
+          {
+            "id": "path_1761330383623",
+            "label": "Path 5",
+            "mappedOptions": [
+              "q_1_opt_1761329835439"
+            ],
+            "color": "#8b5cf6",
+            "scoreMin": null,
+            "scoreMax": null,
+            "rangeConditions": [],
+            "advancedRules": {
+              "enabled": false,
+              "requireAll": [],
+              "requireAny": [],
+              "requireNone": []
+            }
+          }
+        ],
+        "notes": "Path 6 will require a custom email based on the prospect's response. "
+      },
+      "width": 280,
+      "height": 328,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -109.05317797755413,
+        "y": 800.0272143939666
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_14",
+      "type": "email",
+      "position": {
+        "x": -700,
+        "y": 308
+      },
+      "data": {
+        "label": "PathA_Email1B-1_Stage1_Scattered",
+        "description": "Automated response to Survey 1 answer \"Scattered across email attachments\" - Diagnoses Stage 1 (Scattered), explains pain points, provides 4-step quick win, teases Email 2 cost calculation",
+        "subject": "Your document assessment results are here",
+        "subjectVariants": [
+          {
+            "id": "A",
+            "subject": "Your document assessment results are here",
+            "weight": 33
+          },
+          {
+            "id": "B",
+            "subject": "[First Name], here's what your answer reveals",
+            "weight": 33
+          },
+          {
+            "id": "C",
+            "subject": "You're in Stage 1 (Scattered) - here's what that means",
+            "weight": 34
+          }
+        ],
+        "emailContent": "html<p>Hi [First Name],</p>\n\n<p>Thanks for completing Step 1. Here's what your answer tells us:</p>\n\n<p><strong>You said:</strong> Scattered across email attachments<br>\n<strong>That means:</strong> You're in <strong>Stage 1: Scattered</strong></p>\n\n<p>Here's the pattern we see:</p>\n\n<p>Documents live in email attachments. Version control doesn't exist—someone has \"Final_v3_ACTUAL_USE_THIS.pdf\" while someone else is working from \"Final_v2_revised.pdf\". When you need a file, you're searching through emails hoping you can remember who sent it or what the subject line was.</p>\n\n<p><strong>What you're exposed to:</strong></p>\n\n<ul>\n  <li><strong>Lost institutional knowledge</strong> - When employees leave, their inboxes (and all those attachments) go with them</li>\n  <li><strong>Version chaos</strong> - Multiple versions circulating, no single source of truth</li>\n  <li><strong>Zero access control</strong> - Anyone can forward anything to anyone</li>\n  <li><strong>Collaboration breakdown</strong> - Email chains with 14 versions of the same file</li>\n  <li><strong>Search time drain</strong> - \"Can someone send me that file?\" becomes your team's most common question</li>\n</ul>\n\n<p><strong>The cost you're not seeing:</strong></p>\n\n<p>Most Stage 1 companies only count search time. But the real costs are duplicate work (because no one can find the original), missed deadlines (from working on wrong versions), and security exposure (sensitive documents in unsecured inboxes).</p>\n\n<p><strong>Quick win you can implement today:</strong></p>\n\n<ol>\n  <li><strong>Identify your top 3 most-requested document types</strong> - What files do people ask for weekly? (contracts, invoices, project files, etc.)</li>\n  <li><strong>Create a dedicated shared folder</strong> - One centralized location specifically for these documents</li>\n  <li><strong>Move current versions there</strong> - Pull the latest version from emails into the folder</li>\n  <li><strong>Announce the change</strong> - Tell your team \"From now on, [document type] lives here\"</li>\n</ol>\n\n<p>You don't need to solve everything—just stop the bleeding on your highest-volume documents.</p>\n\n<p><strong>Your next step:</strong></p>\n\n<p>Now that you know WHERE your documents are, the next question is: How much is this costing you?</p>\n\n<p>Not just the search time, but the duplicate work, the missed opportunities, the compliance exposure.</p>\n\n<p><strong>In 3 days, I'll send you the Hidden Cost Formula—plus another quick question (15 seconds) that helps you calculate what scattered documents are actually costing your company.</strong></p>\n\n<p>Allie</p>\n\n<p>P.S. - Email wasn't designed to be a document management system. It was designed for communication. When you use it for both, you get the worst of both worlds—slow communication AND lost documents.</p>",
+        "notes": "Stage: Stage 1 (Scattered)\nTrigger: Survey 1 answer = \"Scattered across email attachments\"\nSend timing: Immediately after Survey 1 completion\nTags: PathA_Survey1_Complete, PathA_S1_EmailAttachments, Stage1_Scattered\nNext email: Email 2 (teaching) sends automatically in 3 days\nQuick win: 4-step process for shared folder creation\nCTA: None (passive wait for Email 2)",
+        "emailTemplate": "blank",
+        "mjmlTemplate": ""
+      },
+      "width": 250,
+      "height": 206,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -700,
+        "y": 308
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_15",
+      "type": "email",
+      "position": {
+        "x": -392,
+        "y": 308
+      },
+      "data": {
+        "label": "PathA_Email1B-2_Stage2_Siloed",
+        "description": "Automated response to Survey 1 answer \"Multiple shared drives or servers\" - Diagnoses Stage 2 (Siloed), explains pain points, provides 4-step quick win, teases Email 2 cost calculation",
+        "subject": "Your document assessment results are here",
+        "subjectVariants": [
+          {
+            "id": "A",
+            "subject": "Your document assessment results are here",
+            "weight": 33
+          },
+          {
+            "id": "B",
+            "subject": "[First Name], here's what your answer reveals",
+            "weight": 33
+          },
+          {
+            "id": "C",
+            "subject": "You're in Stage 2 (Siloed) - here's what that means",
+            "weight": 34
+          }
+        ],
+        "emailContent": "html<p>Hi [First Name],</p>\n\n<p>Thanks for completing Step 1. Here's what your answer tells us:</p>\n\n<p><strong>You said:</strong> Multiple shared drives or servers<br>\n<strong>That means:</strong> You're in <strong>Stage 2: Siloed</strong></p>\n\n<p>Here's the pattern we see:</p>\n\n<p>You've moved past email chaos—that's progress. But now you have information islands. Sales has their drive. Operations has theirs. Finance keeps documents somewhere else. When you need cross-functional information, you're asking \"Which drive is that on?\" and \"Who has access to that folder?\"</p>\n\n<p><strong>What you're exposed to:</strong></p>\n\n<ul>\n  <li><strong>Permission maze</strong> - Different access rules on every system, impossible to manage consistently</li>\n  <li><strong>Duplicate storage</strong> - Same documents saved in multiple locations \"just in case\"</li>\n  <li><strong>Search fragmentation</strong> - You need to know WHERE to search before you can search</li>\n  <li><strong>Integration impossibility</strong> - Systems don't talk to each other, creating manual handoffs</li>\n  <li><strong>Information hoarding</strong> - Teams create their own systems because shared ones don't meet their needs</li>\n</ul>\n\n<p><strong>The cost you're not seeing:</strong></p>\n\n<p>Stage 2 companies think they've solved the problem because documents aren't in email anymore. But you're paying for multiple storage systems, duplicate licenses, and the productivity drain of employees navigating multiple repositories every day.</p>\n\n<p><strong>Quick win you can implement today:</strong></p>\n\n<ol>\n  <li><strong>Map your current landscape</strong> - List every shared drive, folder system, or repository your company uses</li>\n  <li><strong>Identify overlap</strong> - Which document types exist in multiple locations? Start there</li>\n  <li><strong>Pick one primary location</strong> - For overlapping documents, designate THE authoritative source</li>\n  <li><strong>Communicate the hierarchy</strong> - Tell your team \"If it exists in both places, Location X is the source of truth\"</li>\n</ol>\n\n<p>You're not consolidating everything yet—just reducing the confusion on your most critical documents.</p>\n\n<p><strong>Your next step:</strong></p>\n\n<p>Now that you know WHERE your documents are, the next question is: How much is this costing you?</p>\n\n<p>The Siloed stage typically costs more than the Scattered stage because it creates a false sense of security while hiding expensive inefficiencies.</p>\n\n<p><strong>In 3 days, I'll send you the Hidden Cost Formula—plus another quick question (15 seconds) that helps you calculate what multiple systems are actually costing your company.</strong></p>\n\n<p>Allie</p>\n\n<p>P.S. - Stage 2 is where most companies get stuck. They've improved enough that it's no longer a crisis, but not enough to stop the continuous drain on productivity. The question is: How much longer are you willing to pay that tax?</p>",
+        "notes": "Stage: Stage 2 (Siloed)\nTrigger: Survey 1 answer = \"Multiple shared drives or servers\"\nSend timing: Immediately after Survey 1 completion\nTags: PathA_Survey1_Complete, PathA_S1_MultipleSharedDrives, Stage2_Siloed\nNext email: Email 2 (teaching) sends automatically in 3 days\nQuick win: 4-step process for mapping landscape and designating primary locations\nCTA: None (passive wait for Email 2)",
+        "emailTemplate": "blank",
+        "mjmlTemplate": ""
+      },
+      "width": 250,
+      "height": 206,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -392,
+        "y": 308
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_16",
+      "type": "email",
+      "position": {
+        "x": -92,
+        "y": 306
+      },
+      "data": {
+        "label": "PathA_Email1B-3_Stage3_Secured",
+        "description": "Automated response to Survey 1 answer \"Central system but still lots of manual work\" - Diagnoses Stage 3 (Secured), explains pain points, provides 4-step quick win, teases Email 2 cost calculation",
+        "subject": "Your document assessment results are here",
+        "subjectVariants": [
+          {
+            "id": "A",
+            "subject": "Your document assessment results are here",
+            "weight": 33
+          },
+          {
+            "id": "B",
+            "subject": "[First Name], here's what your answer reveals",
+            "weight": 33
+          },
+          {
+            "id": "C",
+            "subject": "You're in Stage 3 (Secured) - here's what that means",
+            "weight": 34
+          }
+        ],
+        "emailContent": "html<p>Hi [First Name],</p>\n\n<p>Thanks for completing Step 1. Here's what your answer tells us:</p>\n\n<p><strong>You said:</strong> Central system but still lots of manual work<br>\n<strong>That means:</strong> You're in <strong>Stage 3: Secured</strong></p>\n\n<p>Here's the pattern we see:</p>\n\n<p>You've made serious progress. You have central storage, better security, consistent structure (mostly). But you're still burning hours on manual routing, data entry, filing, and searching within documents. The system stores your documents well—it just doesn't automate the work AROUND those documents.</p>\n\n<p><strong>What you're exposed to:</strong></p>\n\n<ul>\n  <li><strong>Manual approval workflows</strong> - Documents bottleneck at key people who have to route them manually</li>\n  <li><strong>Time-consuming data entry</strong> - Someone's typing information that already exists digitally elsewhere</li>\n  <li><strong>Human-dependent version control</strong> - Requires constant oversight to prevent overwrites and conflicts</li>\n  <li><strong>One-by-one permission management</strong> - Every new hire means manually setting up folder access</li>\n  <li><strong>Process knowledge trapped in heads</strong> - The workflow only works because Sarah knows who needs what</li>\n</ul>\n\n<p><strong>The cost you're not seeing:</strong></p>\n\n<p>Stage 3 companies underestimate costs because \"we have a system.\" But the real expense is in labor—your best people spending hours on document processing instead of using their expertise where it creates value. That's opportunity cost at scale.</p>\n\n<p><strong>Quick win you can implement today:</strong></p>\n\n<ol>\n  <li><strong>Identify your top 3 repetitive document processes</strong> - What workflows happen weekly? (invoice approvals, contract routing, report distribution, etc.)</li>\n  <li><strong>Map one process visually</strong> - Draw it out: where documents move, who touches them, what actions repeat</li>\n  <li><strong>Spot the manual bottlenecks</strong> - Circle every step that requires human action (forwarding, filing, data entry)</li>\n  <li><strong>Calculate time spent</strong> - Estimate hours per month on those manual steps alone</li>\n</ol>\n\n<p>The inefficiencies become obvious once you see the pattern mapped out.</p>\n\n<p><strong>Your next step:</strong></p>\n\n<p>Now that you know WHERE your documents are, the next question is: How much is this costing you?</p>\n\n<p>The cost isn't obvious because you're not searching for files anymore. But you're paying in time—every manual file, every approval you chase, every permission you set by hand adds up.</p>\n\n<p><strong>In 3 days, I'll send you the Hidden Cost Formula—plus another quick question (15 seconds) that helps you calculate what manual processes are actually costing your company.</strong></p>\n\n<p>Allie</p>\n\n<p>P.S. - Having a system doesn't mean the work disappears—it just changes form. The question is: Are your people doing valuable work, or are they doing work the system should be doing for them?</p>",
+        "notes": "Stage: Stage 3 (Secured)\nTrigger: Survey 1 answer = \"Central system but still lots of manual work\"\nSend timing: Immediately after Survey 1 completion\nTags: PathA_Survey1_Complete, PathA_S1_CentralManual, Stage3_Secured\nNext email: Email 2 (teaching) sends automatically in 3 days\nQuick win: 4-step process for mapping repetitive processes\nCTA: None (passive wait for Email 2)",
+        "emailTemplate": "blank",
+        "mjmlTemplate": ""
+      },
+      "width": 250,
+      "height": 206,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -92,
+        "y": 306
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_17",
+      "type": "email",
+      "position": {
+        "x": 198,
+        "y": 298
+      },
+      "data": {
+        "label": "PathA_Email1B-4_Stage4_Streamlined",
+        "description": "Automated response to Survey 1 answer \"Automated system with workflows\" - Diagnoses Stage 4 (Streamlined), explains pain points, provides 4-step quick win, teases Email 2 cost calculation",
+        "subject": "Your document assessment results are here",
+        "subjectVariants": [
+          {
+            "id": "A",
+            "subject": "Your document assessment results are here",
+            "weight": 33
+          },
+          {
+            "id": "B",
+            "subject": "[First Name], here's what your answer reveals",
+            "weight": 33
+          },
+          {
+            "id": "C",
+            "subject": "You're in Stage 4 (Streamlined) - here's what that means",
+            "weight": 34
+          }
+        ],
+        "emailContent": "html<p>Hi [First Name],</p>\n\n<p>Thanks for completing Step 1. Here's what your answer tells us:</p>\n\n<p><strong>You said:</strong> Automated system with workflows<br>\n<strong>That means:</strong> You're in <strong>Stage 4: Streamlined</strong></p>\n\n<p>Here's the interesting thing:</p>\n\n<p>You've reached the level most companies aspire to. Automated workflows, intelligent routing, minimal manual intervention. So why are you taking this health check?</p>\n\n<p><strong>The typical reasons:</strong></p>\n\n<ul>\n  <li><strong>Your system is showing age</strong> - Technology evolved. Your 5-year-old solution might be limiting you</li>\n  <li><strong>Growth exposed gaps</strong> - What worked for 20 people breaks at 50</li>\n  <li><strong>New use cases emerged</strong> - AI, compliance requirements, remote work changed needs</li>\n  <li><strong>Leadership wants validation</strong> - Budget season means justifying existing investments</li>\n  <li><strong>Acquisition or integration</strong> - Merging systems or standardizing across divisions</li>\n</ul>\n\n<p><strong>What to watch for:</strong></p>\n\n<p>Even Stage 4 systems need evaluation. Technology moves fast. Compliance requirements change. User expectations evolve. And the system that solved yesterday's problems might not be optimized for tomorrow's opportunities.</p>\n\n<p><strong>The cost you might not be seeing:</strong></p>\n\n<p>Stage 4 companies often overlook small inefficiencies that compound at scale. A 2% process drag in a mostly-automated system still costs real money when it touches thousands of documents monthly. Plus, you might be paying for capacity you don't use—or worse, lacking features you need but haven't asked about.</p>\n\n<p><strong>Quick win you can implement today:</strong></p>\n\n<ol>\n  <li><strong>Audit your actual usage</strong> - Pull reports on which features your team actually uses versus what you're paying for</li>\n  <li><strong>Survey power users</strong> - Ask your top 10 system users: \"What workaround have you created because the system can't do [X]?\"</li>\n  <li><strong>List your wish list</strong> - What would you automate if you could? (Sometimes it already exists, you just didn't know)</li>\n  <li><strong>Check your integration points</strong> - Where do documents move in/out of your system? Those handoffs often hide inefficiencies</li>\n</ol>\n\n<p>Even excellent systems have optimization opportunities.</p>\n\n<p><strong>Your next step:</strong></p>\n\n<p>Now that you know WHERE your documents are, the next question is: How much could you be saving if your system was optimized?</p>\n\n<p>Even small inefficiencies in a mostly-automated system compound at scale. And technology that's 3-5 years old might be costing you opportunities you don't even see yet.</p>\n\n<p><strong>In 3 days, I'll send you the Hidden Cost Formula—plus another quick question (15 seconds) that helps you calculate optimization opportunities.</strong></p>\n\n<p>Allie</p>\n\n<p>P.S. - Stage 4 isn't \"done.\" It's the foundation for continuous improvement. The companies that stay at Stage 4 regularly audit their systems for optimization opportunities. That's what separates leaders from laggards.</p>",
+        "notes": "Stage: Stage 4 (Streamlined)\nTrigger: Survey 1 answer = \"Automated system with workflows\"\nSend timing: Immediately after Survey 1 completion\nTags: PathA_Survey1_Complete, PathA_S1_AutomatedWorkflows, Stage4_Streamlined\nNext email: Email 2 (teaching) sends automatically in 3 days\nQuick win: 4-step process for auditing usage and identifying optimization opportunities\nCTA: None (passive wait for Email 2)",
+        "emailTemplate": "blank",
+        "mjmlTemplate": ""
+      },
+      "width": 250,
+      "height": 226,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 198,
+        "y": 298
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_18",
+      "type": "email",
+      "position": {
+        "x": -721.2,
+        "y": 1258.8
+      },
+      "data": {
+        "label": "PathA_Email2B-1_Bottleneck_Searching",
+        "description": "Automated response to Survey 2 answer \"Searching for documents/information\" - Explains search time costs, provides 4-step quick win for improving findability, teases Email 3 about implementation failures",
+        "subject": "Your cost breakdown is here",
+        "subjectVariants": [
+          {
+            "id": "A",
+            "subject": "Your cost breakdown is here",
+            "weight": 33
+          },
+          {
+            "id": "B",
+            "subject": "[First Name], here's what searching is really costing you",
+            "weight": 33
+          },
+          {
+            "id": "C",
+            "subject": "The hidden cost of \"Where's that file?\"",
+            "weight": 34
+          }
+        ],
+        "emailContent": "html<p>Hi [First Name],</p>\n\n<p>Thanks for completing Step 2. Here's what your answer tells us:</p>\n\n<p><strong>You said:</strong> Searching for documents/information is your biggest bottleneck</p>\n\n<p>Here's the pattern we see:</p>\n\n<p>\"Where's that file?\" \"Who has the latest version?\" \"Can someone send me the contract from last month?\" Your team spends more time hunting for documents than actually working with them. And everyone thinks it's just part of the job.</p>\n\n<p><strong>What this bottleneck costs you:</strong></p>\n\n<ul>\n  <li><strong>Direct time loss</strong> - Average employee spends 2.5 hours per week searching for information (that's 6.5 weeks per year)</li>\n  <li><strong>Duplicate work</strong> - Can't find the original? Create it again from scratch</li>\n  <li><strong>Decision delays</strong> - Meetings postponed because \"we need to find that data first\"</li>\n  <li><strong>Customer impact</strong> - \"Let me get back to you\" becomes your default response</li>\n  <li><strong>Institutional knowledge loss</strong> - Only certain people know where things are, creating single points of failure</li>\n</ul>\n\n<p><strong>The cost you're not seeing:</strong></p>\n\n<p>Most companies only count the search time itself. But the real costs multiply: frustration kills momentum, duplicate work compounds errors, and your most expensive employees waste hours on treasure hunts instead of using their expertise where it creates value.</p>\n\n<p><strong>Quick win you can implement today:</strong></p>\n\n<ol>\n  <li><strong>Identify your \"Most Wanted\" documents</strong> - What 5-10 files does your team ask for most often?</li>\n  <li><strong>Create a Known Location guide</strong> - Simple document or wiki page that says \"Looking for X? It's always here: [link]\"</li>\n  <li><strong>Establish naming conventions</strong> - Even basic rules help: ProjectName_DocumentType_Date (e.g., \"Acme_Contract_2025-01-15\")</li>\n  <li><strong>Announce and enforce</strong> - Share the guide, make it the first place people check, update it when locations change</li>\n</ol>\n\n<p>You're not fixing everything—just making your highest-value documents instantly findable.</p>\n\n<p><strong>Your next step:</strong></p>\n\n<p>You've identified where your documents are (Step 1) and what's costing you the most time (Step 2).</p>\n\n<p>The question everyone asks next: \"So why don't we just fix this?\"</p>\n\n<p>Good question. And there's a reason 67% of document management implementations fail or underperform.</p>\n\n<p><strong>In 3 days, I'll send you Step 3—one more quick question (15 seconds) about what typically blocks companies from actually solving this problem.</strong></p>\n\n<p>Allie</p>\n\n<p>P.S. - Search time feels like an individual problem, but it's actually a systems problem. When everyone spends 30 minutes daily searching, that's not a training issue—it's a structure issue. And structure issues need system solutions, not individual workarounds.</p>",
+        "notes": "Bottleneck: Searching for documents/information\nTrigger: Survey 2 answer = \"Searching for documents/information\"\nSend timing: Immediately after Survey 2 completion\nTags: PathA_Survey2_Complete, PathA_S2_Searching\nNext email: Email 3 (teaching - \"Why Implementations Fail\") sends automatically in 3 days\nQuick win: 4-step process for creating Known Location guide and naming conventions\nCTA: None (passive wait for Email 3)\nVariable tracking: Survey1_Answer + Survey2_Answer stored for Email 3B synthesis",
+        "emailTemplate": "blank",
+        "mjmlTemplate": ""
+      },
+      "width": 250,
+      "height": 226,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -721.2,
+        "y": 1258.8
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_19",
+      "type": "email",
+      "position": {
+        "x": -400,
+        "y": 1256
+      },
+      "data": {
+        "label": "PathA_Email2B-2_Bottleneck_ManualDataEntry",
+        "description": "Automated response to Survey 2 answer \"Manual data entry and filing\" - Explains labor costs and error rates, provides 4-step quick win for reducing manual work, teases Email 3 about implementation failures",
+        "subject": "Your cost breakdown is here",
+        "subjectVariants": [
+          {
+            "id": "A",
+            "subject": "Your cost breakdown is here",
+            "weight": 33
+          },
+          {
+            "id": "B",
+            "subject": "[First Name], here's what manual work is really costing you",
+            "weight": 33
+          },
+          {
+            "id": "C",
+            "subject": "The hidden cost of typing what already exists",
+            "weight": 34
+          }
+        ],
+        "emailContent": "html<p>Hi [First Name],</p>\n\n<p>Thanks for completing Step 2. Here's what your answer tells us:</p>\n\n<p><strong>You said:</strong> Manual data entry and filing is your biggest bottleneck</p>\n\n<p>Here's the pattern we see:</p>\n\n<p>Someone receives a document. Then someone else types information from that document into another system. Then someone files it manually. Information that already exists digitally gets re-entered by hand, creating delays, errors, and wasted labor on work that should be automated.</p>\n\n<p><strong>What this bottleneck costs you:</strong></p>\n\n<ul>\n  <li><strong>Direct labor cost</strong> - Manual data entry typically consumes 20-30% of administrative time</li>\n  <li><strong>Error rates</strong> - Human data entry has 1-4% error rates, creating downstream problems that multiply</li>\n  <li><strong>Processing delays</strong> - Documents sit in queues waiting for someone to manually process them</li>\n  <li><strong>Scalability ceiling</strong> - Growth means hiring more people to do the same manual work</li>\n  <li><strong>Employee frustration</strong> - Your best people spending hours on mind-numbing data entry</li>\n</ul>\n\n<p><strong>The cost you're not seeing:</strong></p>\n\n<p>Most companies only calculate the direct labor hours. But manual entry creates error correction cycles, delayed decisions (because data isn't available yet), and opportunity cost—skilled employees doing work that technology should handle while higher-value work goes undone.</p>\n\n<p><strong>Quick win you can implement today:</strong></p>\n\n<ol>\n  <li><strong>Identify your highest-volume manual processes</strong> - What gets entered or filed most frequently? (invoices, forms, customer data, etc.)</li>\n  <li><strong>Track one process for a week</strong> - Count how many times it happens and how long each instance takes</li>\n  <li><strong>Calculate the monthly cost</strong> - Multiply instances × time × hourly rate to see real dollars</li>\n  <li><strong>Research alternatives</strong> - Even basic OCR or form automation can eliminate 60-80% of manual entry</li>\n</ol>\n\n<p>You're not automating everything—just quantifying the cost so you know where investment pays off fastest.</p>\n\n<p><strong>Your next step:</strong></p>\n\n<p>You've identified where your documents are (Step 1) and what's costing you the most time (Step 2).</p>\n\n<p>The question everyone asks next: \"So why don't we just fix this?\"</p>\n\n<p>Good question. And there's a reason 67% of document management implementations fail or underperform.</p>\n\n<p><strong>In 3 days, I'll send you Step 3—one more quick question (15 seconds) about what typically blocks companies from actually solving this problem.</strong></p>\n\n<p>Allie</p>\n\n<p>P.S. - Manual data entry isn't just expensive labor—it's a talent drain. Your skilled employees didn't join your company to be human copy machines. When automation handles the mechanical work, people can focus on work that actually requires human judgment and expertise.</p>",
+        "notes": "Bottleneck: Manual data entry and filing\nTrigger: Survey 2 answer = \"Manual data entry and filing\"\nSend timing: Immediately after Survey 2 completion\nTags: PathA_Survey2_Complete, PathA_S2_ManualEntry\nNext email: Email 3 (teaching - \"Why Implementations Fail\") sends automatically in 3 days\nQuick win: 4-step process for tracking and quantifying manual processes\nCTA: None (passive wait for Email 3)\nVariable tracking: Survey1_Answer + Survey2_Answer stored for Email 3B synthesis",
+        "emailTemplate": "blank",
+        "mjmlTemplate": ""
+      },
+      "width": 250,
+      "height": 226,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -400,
+        "y": 1256
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_20",
+      "type": "email",
+      "position": {
+        "x": -88,
+        "y": 1252
+      },
+      "data": {
+        "label": "PathA_Email2B-3_Bottleneck_ApprovalWorkflows",
+        "description": "Automated response to Survey 2 answer \"Approval workflows and routing\" - Explains bottleneck costs and delay impacts, provides 4-step quick win for workflow visibility, teases Email 3 about implementation failures",
+        "subject": "Your cost breakdown is here",
+        "subjectVariants": [
+          {
+            "id": "A",
+            "subject": "Your cost breakdown is here",
+            "weight": 33
+          },
+          {
+            "id": "B",
+            "subject": "[First Name], here's what approval delays are really costing you",
+            "weight": 33
+          },
+          {
+            "id": "C",
+            "subject": "The hidden cost of \"waiting on approvals\"",
+            "weight": 34
+          }
+        ],
+        "emailContent": "html<p>Hi [First Name],</p>\n\n<p>Thanks for completing Step 2. Here's what your answer tells us:</p>\n\n<p><strong>You said:</strong> Approval workflows and routing is your biggest bottleneck</p>\n\n<p>Here's the pattern we see:</p>\n\n<p>Documents need three signatures. You send it to Person A. They approve and forward to Person B. Person B is out of office. It sits for a week. Finally reaches Person C who asks a question that sends it back to the beginning. A process that should take hours takes weeks.</p>\n\n<p><strong>What this bottleneck costs you:</strong></p>\n\n<ul>\n  <li><strong>Cycle time delays</strong> - Processes that should take hours stretch into days or weeks</li>\n  <li><strong>Lost opportunities</strong> - Deals expire, discounts missed, contracts delayed while waiting on signatures</li>\n  <li><strong>Chase time</strong> - Someone's job becomes \"following up on approvals\" instead of productive work</li>\n  <li><strong>Visibility gaps</strong> - No one knows where documents are in the approval chain until they ask</li>\n  <li><strong>Bottleneck people</strong> - Key approvers become single points of failure, slowing everything down</li>\n</ul>\n\n<p><strong>The cost you're not seeing:</strong></p>\n\n<p>Most companies only count the delay time. But approval bottlenecks create opportunity costs (missed deals), relationship costs (frustrated customers and vendors), and morale costs—nothing kills momentum like waiting days for a signature while competitors move faster.</p>\n\n<p><strong>Quick win you can implement today:</strong></p>\n\n<ol>\n  <li><strong>Map your approval-heavy processes</strong> - What requires multiple sign-offs? (contracts, purchase orders, hiring, etc.)</li>\n  <li><strong>Track one approval cycle end-to-end</strong> - From submission to final approval, log every step and delay</li>\n  <li><strong>Identify the bottlenecks</strong> - Where does it sit the longest? Who's the common delay point?</li>\n  <li><strong>Create visibility</strong> - Even a simple shared spreadsheet showing \"Status: With John for approval since 10/15\" helps</li>\n</ol>\n\n<p>You're not fixing the workflow yet—just making the delays visible so you know where to focus improvement efforts.</p>\n\n<p><strong>Your next step:</strong></p>\n\n<p>You've identified where your documents are (Step 1) and what's costing you the most time (Step 2).</p>\n\n<p>The question everyone asks next: \"So why don't we just fix this?\"</p>\n\n<p>Good question. And there's a reason 67% of document management implementations fail or underperform.</p>\n\n<p><strong>In 3 days, I'll send you Step 3—one more quick question (15 seconds) about what typically blocks companies from actually solving this problem.</strong></p>\n\n<p>Allie</p>\n\n<p>P.S. - Manual approval routing isn't just slow—it's opaque. The most expensive delays happen when no one realizes something's stuck. Visibility alone often cuts approval time by 30-40% because people can see when they're the bottleneck.</p>",
+        "notes": "Bottleneck: Approval workflows and routing\nTrigger: Survey 2 answer = \"Approval workflows and routing\"\nSend timing: Immediately after Survey 2 completion\nTags: PathA_Survey2_Complete, PathA_S2_Approvals\nNext email: Email 3 (teaching - \"Why Implementations Fail\") sends automatically in 3 days\nQuick win: 4-step process for mapping approval cycles and creating visibility\nCTA: None (passive wait for Email 3)\nVariable tracking: Survey1_Answer + Survey2_Answer stored for Email 3B synthesis",
+        "emailTemplate": "blank",
+        "mjmlTemplate": ""
+      },
+      "width": 250,
+      "height": 226,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -88,
+        "y": 1252
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_21",
+      "type": "email",
+      "position": {
+        "x": 240,
+        "y": 1244
+      },
+      "data": {
+        "label": "PathA_Email2B-4_Bottleneck_VersionControl",
+        "description": "Automated response to Survey 2 answer \"Version control and collaboration\" - Explains version chaos costs and collaboration breakdown, provides 4-step quick win, teases Email 3 about implementation failures",
+        "subject": "Your cost breakdown is here",
+        "subjectVariants": [
+          {
+            "id": "A",
+            "subject": "Your cost breakdown is here",
+            "weight": 33
+          },
+          {
+            "id": "B",
+            "subject": "[First Name], here's what version chaos is really costing you",
+            "weight": 33
+          },
+          {
+            "id": "C",
+            "subject": "The hidden cost of \"Which version is current?\"",
+            "weight": 34
+          }
+        ],
+        "emailContent": "<p>Hi {{firstName}},</p><p>Thanks for completing Step 2. Here's what your answer tells us:</p><p><strong>You said:</strong> Version control and collaboration is your biggest bottleneck</p><p>Here's the pattern we see:</p><p>Someone updates the proposal. Someone else is working from the old version. Two people edit the same document simultaneously, creating conflicts. File names multiply: \"Final.docx,\" \"Final_v2.docx,\" \"Final_REVISED.docx,\" \"Final_USE_THIS_ONE.docx.\" Nobody knows which version is actually current.</p><p><strong>What this bottleneck costs you:</strong></p><ul><li><strong>Duplicate work</strong> - Changes made on outdated versions need to be re-done on current versions</li><li><strong>Merge conflicts</strong> - Time spent reconciling competing edits from different versions</li><li><strong>Quality risks</strong> - Working from old versions means decisions based on outdated information</li><li><strong>Collaboration friction</strong> - \"Can I edit this?\" \"Are you done?\" \"Which version are you using?\" slows everything down</li><li><strong>Compliance exposure</strong> - Using wrong contract versions, outdated pricing, old terms and conditions</li></ul><p><strong>The cost you're not seeing:</strong></p><p>Most companies only count the time spent sorting out version conflicts. But version chaos creates trust erosion (nobody's confident they have the right version), decision delays (meetings postponed to \"make sure we're all looking at the same thing\"), and risk exposure—customers or vendors working from outdated terms.</p><p><strong>Quick win you can implement today:</strong></p><ol><li><strong>Identify your high-collaboration documents</strong> - What files do multiple people need to edit? (proposals, reports, shared spreadsheets, etc.)</li><li><strong>Establish one authoritative location</strong> - Pick ONE place where the current version always lives</li><li><strong>Create a simple naming rule</strong> - Use dates in filenames (YYYY-MM-DD format sorts chronologically automatically)</li><li><strong>Archive old versions</strong> - Move previous versions to an \"Archive\" subfolder, but keep the current one at the top level</li></ol><p>You're not solving all collaboration issues—just eliminating the \"which version?\" question for your most critical documents.</p><p><strong>Your next step:</strong></p><p>You've identified where your documents are (Step 1) and what's costing you the most time (Step 2).</p><p>The question everyone asks next: \"So why don't we just fix this?\"</p><p>Good question. And there's a reason 67% of document management implementations fail or underperform.</p><p><strong>In 3 days, I'll send you Step 3—one more quick question (15 seconds) about what typically blocks companies from actually solving this problem.</strong></p><p>Allie</p><p>P.S. - Version control problems seem small until they're catastrophic. Sending a client the wrong contract version or making decisions based on outdated financial data doesn't just cost time—it costs trust, money, and sometimes the entire relationship.</p>",
+        "notes": "Bottleneck: Version control and collaboration\nTrigger: Survey 2 answer = \"Version control and collaboration\"\nSend timing: Immediately after Survey 2 completion\nTags: PathA_Survey2_Complete, PathA_S2_VersionControl\nNext email: Email 3 (teaching - \"Why Implementations Fail\") sends automatically in 3 days\nQuick win: 4-step process for establishing authoritative location and version naming\nCTA: None (passive wait for Email 3)\nVariable tracking: Survey1_Answer + Survey2_Answer stored for Email 3B synthesis",
+        "emailTemplate": "blank",
+        "mjmlTemplate": ""
+      },
+      "width": 250,
+      "height": 226,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 240,
+        "y": 1244
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_22",
+      "type": "email",
+      "position": {
+        "x": 562,
+        "y": 1238
+      },
+      "data": {
+        "label": "PathA_Email2B-5_Bottleneck_Compliance",
+        "description": "Automated response to Survey 2 answer \"Compliance and audit readiness\" - Explains audit costs and compliance risks, provides 4-step quick win for audit preparation, teases Email 3 about implementation failures",
+        "subject": "Your cost breakdown is here",
+        "subjectVariants": [
+          {
+            "id": "A",
+            "subject": "Your cost breakdown is here",
+            "weight": 33
+          },
+          {
+            "id": "B",
+            "subject": "[First Name], here's what compliance gaps are really costing you",
+            "weight": 33
+          },
+          {
+            "id": "C",
+            "subject": "The hidden cost of \"scrambling for audit\"",
+            "weight": 34
+          }
+        ],
+        "emailContent": "html<p>Hi [First Name],</p>\n\n<p>Thanks for completing Step 2. Here's what your answer tells us:</p>\n\n<p><strong>You said:</strong> Compliance and audit readiness is your biggest bottleneck</p>\n\n<p>Here's the pattern we see:</p>\n\n<p>Audit notification arrives. Panic sets in. Your team spends weeks hunting down documents, reconstructing approval chains, proving retention policies were followed. What should be a routine review becomes an all-hands emergency that consumes hundreds of hours and exposes gaps you didn't know existed.</p>\n\n<p><strong>What this bottleneck costs you:</strong></p>\n\n<ul>\n  <li><strong>Audit preparation time</strong> - Teams spending weeks gathering documentation instead of productive work</li>\n  <li><strong>Compliance risk</strong> - Missing documents, unclear approval trails, retention policy violations</li>\n  <li><strong>Penalty exposure</strong> - Fines for non-compliance range from thousands to millions depending on industry</li>\n  <li><strong>Failed audits</strong> - Audit findings requiring expensive remediation and follow-up audits</li>\n  <li><strong>Competitive disadvantage</strong> - RFPs requiring compliance certifications you can't produce fast enough</li>\n</ul>\n\n<p><strong>The cost you're not seeing:</strong></p>\n\n<p>Most companies only count the direct audit preparation costs. But compliance gaps create opportunity costs (lost bids because you can't prove compliance quickly), insurance costs (higher premiums without proper documentation), and reputation risks—compliance failures become public record in many industries.</p>\n\n<p><strong>Quick win you can implement today:</strong></p>\n\n<ol>\n  <li><strong>List your compliance requirements</strong> - What regulations apply to you? (HIPAA, SOC 2, ISO, industry-specific, etc.)</li>\n  <li><strong>Identify the documents you'd need for audit</strong> - If an auditor showed up tomorrow, what would they ask for?</li>\n  <li><strong>Check if you can actually find them</strong> - Pick 3 critical document types and try to locate them right now</li>\n  <li><strong>Document the gaps</strong> - Where did the search fail? What took too long? What's missing entirely?</li>\n</ol>\n\n<p>You're not solving compliance overnight—just identifying where your exposure is highest so you know what to address first.</p>\n\n<p><strong>Your next step:</strong></p>\n\n<p>You've identified where your documents are (Step 1) and what's costing you the most time (Step 2).</p>\n\n<p>The question everyone asks next: \"So why don't we just fix this?\"</p>\n\n<p>Good question. And there's a reason 67% of document management implementations fail or underperform.</p>\n\n<p><strong>In 3 days, I'll send you Step 3—one more quick question (15 seconds) about what typically blocks companies from actually solving this problem.</strong></p>\n\n<p>Allie</p>\n\n<p>P.S. - Compliance isn't about checking boxes—it's about proving you did what you said you'd do. The companies that treat audit readiness as a daily practice rather than a panic response spend 70% less time on audits and pass at significantly higher rates.</p>",
+        "notes": "Bottleneck: Compliance and audit readiness\nTrigger: Survey 2 answer = \"Compliance and audit readiness\"\nSend timing: Immediately after Survey 2 completion\nTags: PathA_Survey2_Complete, PathA_S2_Compliance\nNext email: Email 3 (teaching - \"Why Implementations Fail\") sends automatically in 3 days\nQuick win: 4-step process for identifying compliance requirements and documenting gaps\nCTA: None (passive wait for Email 3)\nVariable tracking: Survey1_Answer + Survey2_Answer stored for Email 3B synthesis",
+        "emailTemplate": "blank",
+        "mjmlTemplate": ""
+      },
+      "width": 250,
+      "height": 226,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 562,
+        "y": 1238
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_24",
+      "type": "survey",
+      "position": {
+        "x": -101.43004202183806,
+        "y": 1848.3713862394773
+      },
+      "data": {
+        "label": "Implementation Obstacle",
+        "content": "",
+        "description": "Survey 1 told us WHERE their documents are (their stage)\n\nSurvey 2 told us WHAT'S HURTING them most (their pain point)\n\nSurvey 3 tells us WHAT'S BLOCKING them from fixing it (their barrier)",
+        "questions": [
+          {
+            "id": "q_1",
+            "text": "What's your biggest obstacle to improving document management?",
+            "questionType": "radio",
+            "responseOptions": [
+              {
+                "id": "q_1_opt_1",
+                "text": "Lack of executive buy-in",
+                "points": 0,
+                "allowsTextInput": false
+              },
+              {
+                "id": "q_1_opt_2",
+                "text": "User resistance to change",
+                "points": 0,
+                "allowsTextInput": false
+              },
+              {
+                "id": "q_1_opt_1761423498442",
+                "text": "No clear process owner",
+                "points": 0,
+                "allowsTextInput": false
+              },
+              {
+                "id": "q_1_opt_1761423498792",
+                "text": "Budget constraints",
+                "points": 0,
+                "allowsTextInput": false
+              },
+              {
+                "id": "q_1_opt_1761423499062",
+                "text": "Technical integration concerns",
+                "points": 0,
+                "allowsTextInput": false
+              }
+            ]
+          }
+        ],
+        "responsePaths": [
+          {
+            "id": "path_1",
+            "label": "Path 1",
+            "mappedOptions": [
+              "q_1_opt_1"
+            ],
+            "color": "#10b981",
+            "scoreMin": null,
+            "scoreMax": null,
+            "rangeConditions": [],
+            "advancedRules": {
+              "enabled": false,
+              "requireAll": [],
+              "requireAny": [],
+              "requireNone": []
+            }
+          },
+          {
+            "id": "path_2",
+            "label": "Path 2",
+            "mappedOptions": [
+              "q_1_opt_2"
+            ],
+            "color": "#3b82f6",
+            "scoreMin": null,
+            "scoreMax": null,
+            "rangeConditions": [],
+            "advancedRules": {
+              "enabled": false,
+              "requireAll": [],
+              "requireAny": [],
+              "requireNone": []
+            }
+          },
+          {
+            "id": "path_1761423540504",
+            "label": "Path 3",
+            "mappedOptions": [
+              "q_1_opt_1761423498442"
+            ],
+            "color": "#f59e0b",
+            "scoreMin": null,
+            "scoreMax": null,
+            "rangeConditions": [],
+            "advancedRules": {
+              "enabled": false,
+              "requireAll": [],
+              "requireAny": [],
+              "requireNone": []
+            }
+          },
+          {
+            "id": "path_1761423540798",
+            "label": "Path 4",
+            "mappedOptions": [
+              "q_1_opt_1761423498792"
+            ],
+            "color": "#ef4444",
+            "scoreMin": null,
+            "scoreMax": null,
+            "rangeConditions": [],
+            "advancedRules": {
+              "enabled": false,
+              "requireAll": [],
+              "requireAny": [],
+              "requireNone": []
+            }
+          },
+          {
+            "id": "path_1761423541083",
+            "label": "Path 5",
+            "mappedOptions": [
+              "q_1_opt_1761423499062"
+            ],
+            "color": "#8b5cf6",
+            "scoreMin": null,
+            "scoreMax": null,
+            "rangeConditions": [],
+            "advancedRules": {
+              "enabled": false,
+              "requireAll": [],
+              "requireAny": [],
+              "requireNone": []
+            }
+          }
+        ]
+      },
+      "width": 280,
+      "height": 328,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -101.43004202183806,
+        "y": 1848.3713862394773
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_25",
+      "type": "email",
+      "position": {
+        "x": -745.9999999999995,
+        "y": 2337.9999999999986
+      },
+      "data": {
+        "label": "PathA_Email3B-1_Obstacle_ExecutiveBuyIn",
+        "description": "Automated response to Survey 3 answer \"Lack of executive buy-in\" - Explains why executives resist, provides 4-step quick win for building the business case, teases Email 4 synthesis and CTA",
+        "subject": "Your path forward is here",
+        "subjectVariants": [
+          {
+            "id": "A",
+            "subject": "Your path forward is here",
+            "weight": 33
+          },
+          {
+            "id": "B",
+            "subject": "[First Name], here's how to get leadership on board",
+            "weight": 33
+          },
+          {
+            "id": "C",
+            "subject": "The executive buy-in problem (and how to solve it)",
+            "weight": 34
+          }
+        ],
+        "emailContent": "html<p>Hi [First Name],</p>\n\n<p>Thanks for completing Step 3. Here's what your answer tells us:</p>\n\n<p><strong>You said:</strong> Lack of executive buy-in is your biggest obstacle</p>\n\n<p>Here's the pattern we see:</p>\n\n<p>You know the document management problem needs solving. You see the costs daily. But leadership doesn't prioritize it—or worse, they tried something years ago that \"didn't work\" and now they're skeptical. Without executive sponsorship, you can't get budget, can't get authority, and can't make real change happen.</p>\n\n<p><strong>Why executives resist:</strong></p>\n\n<ul>\n  <li><strong>They don't see the cost</strong> - Document chaos is distributed across operations, so it's invisible at the executive level</li>\n  <li><strong>They remember past failures</strong> - A bad implementation 5 years ago creates lasting skepticism</li>\n  <li><strong>It's not \"strategic\"</strong> - Document management feels like plumbing—important but not exciting</li>\n  <li><strong>ROI seems soft</strong> - \"Time savings\" doesn't sound as concrete as \"revenue increase\"</li>\n  <li><strong>Change fatigue</strong> - Another system change means more disruption when they're already managing too many initiatives</li>\n</ul>\n\n<p><strong>The reality:</strong></p>\n\n<p>Executives don't resist document management improvements—they resist unclear proposals. When you can show specific costs, specific benefits, and specific implementation plans, they listen. The companies that get executive buy-in aren't the ones with the worst problems—they're the ones who quantify those problems in executive language.</p>\n\n<p><strong>Quick win you can implement today:</strong></p>\n\n<ol>\n  <li><strong>Calculate one concrete cost</strong> - Pick your biggest pain point and put real dollars on it (employee hours × hourly rate × frequency)</li>\n  <li><strong>Find one external trigger</strong> - What external pressure could make this urgent? (compliance requirement, audit finding, customer complaint, competitive pressure)</li>\n  <li><strong>Identify one executive-level pain point</strong> - How does document chaos affect something leadership already cares about? (delayed contracts = delayed revenue, compliance gaps = risk exposure)</li>\n  <li><strong>Draft a 1-page business case</strong> - Problem in executive terms, cost in real dollars, solution with clear ROI, timeline with minimal disruption</li>\n</ol>\n\n<p>You're not solving the political problem—just reframing the conversation in terms executives actually care about.</p>\n\n<p><strong>Your next step:</strong></p>\n\n<p>You've completed all three steps of the Quick Document Health Check. You know where your documents are, what's costing you the most, and what's blocking you from fixing it.</p>\n\n<p><strong>Now let's put it all together.</strong></p>\n\n<p>In 3 days, I'll send you a personalized assessment that shows how your three answers create a specific path forward—and what you should do next based on your unique situation.</p>\n\n<p>Allie</p>\n\n<p>P.S. - Executive buy-in isn't about convincing people to care about documents—it's about showing them how document problems are already costing them things they care about: revenue delays, compliance risks, competitive disadvantage, employee turnover. Translate your operational pain into their strategic language, and the conversation changes completely.</p>",
+        "notes": "Obstacle: Lack of executive buy-in\nTrigger: Survey 3 answer = \"Lack of executive buy-in\"\nSend timing: Immediately after Survey 3 completion\nTags: PathA_Survey3_Complete, PathA_S3_ExecutiveBuyIn\nNext email: Email 4 (synthesis with all three survey answers + CTA) sends automatically in 3 days\nQuick win: 4-step process for building executive-level business case\nCTA: None (passive wait for Email 4 synthesis)\nVariable tracking: Survey1_Answer + Survey2_Answer + Survey3_Answer stored for Email 4 synthesis",
+        "emailTemplate": "blank",
+        "mjmlTemplate": ""
+      },
+      "width": 250,
+      "height": 226,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -745.9999999999995,
+        "y": 2337.9999999999986
+      },
+      "dragging": false
+    },
+    {
+      "id": "node_26",
+      "type": "email",
+      "position": {
+        "x": -417.9999999999997,
+        "y": 2339.999999999999
+      },
+      "data": {
+        "label": "PathA_Email3B-2_Obstacle_UserResistance",
+        "description": "Automated response to Survey 3 answer \"User resistance to change\" - Explains why users resist, provides 4-step quick win for reducing resistance, teases Email 4 synthesis and CTA",
+        "subject": "Your path forward is here",
+        "subjectVariants": [
+          {
+            "id": "A",
+            "subject": "Your path forward is here",
+            "weight": 33
+          },
+          {
+            "id": "B",
+            "subject": "[First Name], here's how to get your team on board",
+            "weight": 33
+          },
+          {
+            "id": "C",
+            "subject": "The user resistance problem (and how to solve it)",
+            "weight": 34
+          }
+        ],
+        "emailContent": "html<p>Hi [First Name],</p>\n\n<p>Thanks for completing Step 3. Here's what your answer tells us:</p>\n\n<p><strong>You said:</strong> User resistance to change is your biggest obstacle</p>\n\n<p>Here's the pattern we see:</p>\n\n<p>You try to implement something new. Your team pushes back. \"The old way works fine.\" \"This is too complicated.\" \"I don't have time to learn a new system.\" Even when the current process is clearly broken, people cling to familiar chaos rather than risk unfamiliar solutions.</p>\n\n<p><strong>Why users resist:</strong></p>\n\n<ul>\n  <li><strong>They've been burned before</strong> - Past implementations failed, leaving them skeptical of \"this time will be different\"</li>\n  <li><strong>Change means disruption</strong> - Learning new systems feels like falling behind on current work</li>\n  <li><strong>Their workarounds work (for them)</strong> - Individual solutions make personal sense even if they break company-wide</li>\n  <li><strong>No one asked their input</strong> - Solutions imposed from above rarely account for ground-level realities</li>\n  <li><strong>The benefits aren't clear</strong> - \"More efficient\" sounds like \"more work\" unless you show what's in it for them</li>\n</ul>\n\n<p><strong>The reality:</strong></p>\n\n<p>Users don't resist change—they resist change done TO them instead of WITH them. The implementations that succeed involve users early, address their actual pain points (not theoretical ones), and show immediate wins. People adopt systems that make their jobs easier, not systems that make someone else's metrics look better.</p>\n\n<p><strong>Quick win you can implement today:</strong></p>\n\n<ol>\n  <li><strong>Interview 5 actual users</strong> - Ask: \"What document task frustrates you most?\" \"What workaround have you created?\" \"What would make your job easier?\"</li>\n  <li><strong>Find the quick wins</strong> - Identify 2-3 pain points that could be solved quickly without major system changes</li>\n  <li><strong>Solve one pain point first</strong> - Pick the easiest win and implement it fast—show that feedback leads to real improvement</li>\n  <li><strong>Make users part of the solution</strong> - Ask power users to help design/test the next improvement before rolling it out</li>\n</ol>\n\n<p>You're not solving adoption overnight—just proving that change means improvement, not disruption.</p>\n\n<p><strong>Your next step:</strong></p>\n\n<p>You've completed all three steps of the Quick Document Health Check. You know where your documents are, what's costing you the most, and what's blocking you from fixing it.</p>\n\n<p><strong>Now let's put it all together.</strong></p>\n\n<p>In 3 days, I'll send you a personalized assessment that shows how your three answers create a specific path forward—and what you should do next based on your unique situation.</p>\n\n<p>Allie</p>\n\n<p>P.S. - User resistance isn't about stubborn people—it's about broken trust. When implementations fail repeatedly, skepticism becomes rational self-protection. Rebuild trust with small wins that actually solve user problems, and resistance transforms into advocacy.</p>",
+        "notes": "Obstacle: User resistance to change\nTrigger: Survey 3 answer = \"User resistance to change\"\nSend timing: Immediately after Survey 3 completion\nTags: PathA_Survey3_Complete, PathA_S3_UserResistance\nNext email: Email 4 (synthesis with all three survey answers + CTA) sends automatically in 3 days\nQuick win: 4-step process for involving users and creating early wins\nCTA: None (passive wait for Email 4 synthesis)\nVariable tracking: Survey1_Answer + Survey2_Answer + Survey3_Answer stored for Email 4 synthesis",
+        "emailTemplate": "blank",
+        "mjmlTemplate": ""
+      },
+      "width": 250,
+      "height": 226,
+      "selected": false,
+      "dragging": false,
+      "positionAbsolute": {
+        "x": -417.9999999999997,
+        "y": 2339.999999999999
+      }
+    },
+    {
+      "id": "node_27",
+      "type": "email",
+      "position": {
+        "x": -81.99999999999989,
+        "y": 2337.999999999999
+      },
+      "data": {
+        "label": "PathA_Email3B-3_Obstacle_NoProcessOwner",
+        "description": "Automated response to Survey 3 answer \"No clear process owner\" - Explains why ownership matters, provides 4-step quick win for establishing accountability, teases Email 4 synthesis and CTA",
+        "subject": "Your path forward is here",
+        "subjectVariants": [
+          {
+            "id": "A",
+            "subject": "Your path forward is here",
+            "weight": 33
+          },
+          {
+            "id": "B",
+            "subject": "[First Name], here's how to fix the ownership gap",
+            "weight": 33
+          },
+          {
+            "id": "C",
+            "subject": "The process owner problem (and how to solve it)",
+            "weight": 34
+          }
+        ],
+        "emailContent": "html<p>Hi [First Name],</p>\n\n<p>Thanks for completing Step 3. Here's what your answer tells us:</p>\n\n<p><strong>You said:</strong> No clear process owner is your biggest obstacle</p>\n\n<p>Here's the pattern we see:</p>\n\n<p>Document management is \"everyone's job,\" which means it's nobody's job. Issues get raised in meetings, people nod in agreement, but nothing changes because no single person has the authority, accountability, or time to actually drive improvement. Initiative after initiative stalls in the gap between good intentions and actual ownership.</p>\n\n<p><strong>Why the ownership gap matters:</strong></p>\n\n<ul>\n  <li><strong>Diffused responsibility means no responsibility</strong> - When everyone owns it, nobody's accountable for results</li>\n  <li><strong>No one has authority to make decisions</strong> - Cross-functional improvements require someone who can say \"this is how we're doing it\"</li>\n  <li><strong>Competing priorities always win</strong> - Without dedicated ownership, document projects lose to \"real work\"</li>\n  <li><strong>Knowledge stays fragmented</strong> - Different people know different pieces, but no one sees the whole picture</li>\n  <li><strong>Vendors have no single point of contact</strong> - Implementation requires decisions, and decisions require decision-makers</li>\n</ul>\n\n<p><strong>The reality:</strong></p>\n\n<p>Process ownership doesn't mean one person does all the work—it means one person has authority to make decisions, accountability for results, and permission to pull resources when needed. Companies with clear process owners complete implementations 3X faster than companies where document management is \"shared responsibility.\"</p>\n\n<p><strong>Quick win you can implement today:</strong></p>\n\n<ol>\n  <li><strong>Identify potential owners</strong> - Who currently feels the pain most? Operations manager? IT director? Office manager? Who has cross-functional visibility?</li>\n  <li><strong>Define what ownership means</strong> - Authority to make process decisions, budget to implement improvements, time allocated (not \"in spare time\")</li>\n  <li><strong>Make the business case for ownership</strong> - Calculate cost of current chaos, show ROI of dedicated ownership (use data from your previous survey answers)</li>\n  <li><strong>Propose a pilot</strong> - Start with 90-day trial ownership for one critical process—prove the concept before expanding scope</li>\n</ol>\n\n<p>You're not reorganizing the company—just establishing clear accountability for one critical function that currently has none.</p>\n\n<p><strong>Your next step:</strong></p>\n\n<p>You've completed all three steps of the Quick Document Health Check. You know where your documents are, what's costing you the most, and what's blocking you from fixing it.</p>\n\n<p><strong>Now let's put it all together.</strong></p>\n\n<p>In 3 days, I'll send you a personalized assessment that shows how your three answers create a specific path forward—and what you should do next based on your unique situation.</p>\n\n<p>Allie</p>\n\n<p>P.S. - The ownership gap is fixable, but it requires executive recognition that document management is a real function, not a side task. The companies that succeed assign ownership with authority and accountability—not just responsibility without resources.</p>",
+        "notes": "Obstacle: No clear process owner\nTrigger: Survey 3 answer = \"No clear process owner\"\nSend timing: Immediately after Survey 3 completion\nTags: PathA_Survey3_Complete, PathA_S3_NoOwner\nNext email: Email 4 (synthesis with all three survey answers + CTA) sends automatically in 3 days\nQuick win: 4-step process for establishing process ownership\nCTA: None (passive wait for Email 4 synthesis)\nVariable tracking: Survey1_Answer + Survey2_Answer + Survey3_Answer stored for Email 4 synthesis",
+        "emailTemplate": "blank",
+        "mjmlTemplate": ""
+      },
+      "width": 250,
+      "height": 226,
+      "selected": false,
+      "dragging": false,
+      "positionAbsolute": {
+        "x": -81.99999999999989,
+        "y": 2337.999999999999
+      }
+    },
+    {
+      "id": "node_28",
+      "type": "email",
+      "position": {
+        "x": 281.9999999999999,
+        "y": 2335.999999999999
+      },
+      "data": {
+        "label": "PathA_Email3B-4_Obstacle_BudgetConstraints",
+        "description": "Automated response to Survey 3 answer \"Budget constraints\" - Explains budget reality vs perception, provides 4-step quick win for building budget case, teases Email 4 synthesis and CTA",
+        "subject": "Your path forward is here",
+        "subjectVariants": [
+          {
+            "id": "A",
+            "subject": "Your path forward is here",
+            "weight": 33
+          },
+          {
+            "id": "B",
+            "subject": "[First Name], here's how to work within budget reality",
+            "weight": 33
+          },
+          {
+            "id": "C",
+            "subject": "The budget problem (and how to solve it)",
+            "weight": 34
+          }
+        ],
+        "emailContent": "html<p>Hi [First Name],</p>\n\n<p>Thanks for completing Step 3. Here's what your answer tells us:</p>\n\n<p><strong>You said:</strong> Budget constraints is your biggest obstacle</p>\n\n<p>Here's the pattern we see:</p>\n\n<p>\"We don't have budget for that.\" It's the most common blocker, but the reality is usually more nuanced. Sometimes there's genuinely no money. More often, there's budget—it's just allocated elsewhere because document management hasn't made a compelling case to compete for those dollars.</p>\n\n<p><strong>Why budget is (and isn't) the real issue:</strong></p>\n\n<ul>\n  <li><strong>Invisible costs stay unfunded</strong> - Companies won't fund solutions to problems they can't see or quantify</li>\n  <li><strong>Document management competes with revenue generators</strong> - Hard to prioritize \"efficiency\" over \"growth\"</li>\n  <li><strong>Past investments went nowhere</strong> - Money spent on systems that didn't deliver creates spending skepticism</li>\n  <li><strong>Phased approach wasn't considered</strong> - \"We can't afford the complete solution\" ignores partial solutions that pay for themselves</li>\n  <li><strong>Total cost of inaction is unknown</strong> - Current chaos costs more than proposed solutions, but those costs aren't calculated</li>\n</ul>\n\n<p><strong>The reality:</strong></p>\n\n<p>Budget constraints are real, but they're rarely absolute. Companies find money for things that are either urgent (compliance deadline, audit finding, customer escalation) or that pay for themselves quickly (clear ROI in 6-12 months). The budget conversation changes when you can show that doing nothing costs more than doing something.</p>\n\n<p><strong>Quick win you can implement today:</strong></p>\n\n<ol>\n  <li><strong>Calculate your cost of chaos</strong> - Use data from your survey answers: quantify search time, manual work, delays, errors in actual dollars per year</li>\n  <li><strong>Price phased solutions</strong> - Don't ask for everything at once—what's the smallest investment that solves your biggest pain point?</li>\n  <li><strong>Calculate payback period</strong> - If solution costs $X and saves $Y annually, show how fast it pays for itself</li>\n  <li><strong>Find the urgency trigger</strong> - What external pressure exists? Compliance deadline? Audit requirement? Customer demand? Contract clause? Urgency unlocks budget</li>\n</ol>\n\n<p>You're not magically creating budget—just reframing the conversation from \"cost\" to \"investment with measurable return.\"</p>\n\n<p><strong>Your next step:</strong></p>\n\n<p>You've completed all three steps of the Quick Document Health Check. You know where your documents are, what's costing you the most, and what's blocking you from fixing it.</p>\n\n<p><strong>Now let's put it all together.</strong></p>\n\n<p>In 3 days, I'll send you a personalized assessment that shows how your three answers create a specific path forward—and what you should do next based on your unique situation.</p>\n\n<p>Allie</p>\n\n<p>P.S. - Budget constraints are usually priority constraints in disguise. When you can prove that document chaos costs $100K annually and a solution costs $30K with 8-month payback, \"we don't have budget\" transforms into \"why haven't we done this already?\"</p>",
+        "notes": "Obstacle: Budget constraints\nTrigger: Survey 3 answer = \"Budget constraints\"\nSend timing: Immediately after Survey 3 completion\nTags: PathA_Survey3_Complete, PathA_S3_Budget\nNext email: Email 4 (synthesis with all three survey answers + CTA) sends automatically in 3 days\nQuick win: 4-step process for building ROI case and finding urgency triggers\nCTA: None (passive wait for Email 4 synthesis)\nVariable tracking: Survey1_Answer + Survey2_Answer + Survey3_Answer stored for Email 4 synthesis",
+        "emailTemplate": "blank",
+        "mjmlTemplate": ""
+      },
+      "width": 250,
+      "height": 226,
+      "selected": false,
+      "dragging": false,
+      "positionAbsolute": {
+        "x": 281.9999999999999,
+        "y": 2335.999999999999
+      }
+    },
+    {
+      "id": "node_29",
+      "type": "email",
+      "position": {
+        "x": 611.9999999999995,
+        "y": 2335.999999999999
+      },
+      "data": {
+        "label": "PathA_Email3B-5_Obstacle_TechnicalIntegration",
+        "description": "Automated response to Survey 3 answer \"Technical integration concerns\" - Explains integration reality, provides 4-step quick win for assessing integration needs, teases Email 4 synthesis and CTA",
+        "subject": "Your path forward is here",
+        "subjectVariants": [
+          {
+            "id": "A",
+            "subject": "Your path forward is here",
+            "weight": 33
+          },
+          {
+            "id": "B",
+            "subject": "[First Name], here's how to handle the integration challenge",
+            "weight": 33
+          },
+          {
+            "id": "C",
+            "subject": "The integration problem (and how to solve it)",
+            "weight": 34
+          }
+        ],
+        "emailContent": "html<p>Hi [First Name],</p>\n\n<p>Thanks for completing Step 3. Here's what your answer tells us:</p>\n\n<p><strong>You said:</strong> Technical integration concerns is your biggest obstacle</p>\n\n<p>Here's the pattern we see:</p>\n\n<p>\"How will it work with our existing systems?\" It's a legitimate question that often becomes a blocker. Your tech stack is complex, integrated in fragile ways, and nobody wants to break what's currently working. The fear of integration problems kills projects before they start.</p>\n\n<p><strong>Why integration concerns matter (and don't):</strong></p>\n\n<ul>\n  <li><strong>Legacy systems create real constraints</strong> - Older technology genuinely limits integration options</li>\n  <li><strong>Past integration failures create skepticism</strong> - \"Last time we tried to connect systems, it was a disaster\"</li>\n  <li><strong>IT has integration fatigue</strong> - Every new system means more complexity to maintain</li>\n  <li><strong>Perfect integration becomes the enemy of good enough</strong> - Waiting for seamless integration means never starting</li>\n  <li><strong>Integration needs are often overestimated</strong> - Most workflows need connection, not full integration</li>\n</ul>\n\n<p><strong>The reality:</strong></p>\n\n<p>Modern document management systems are built for integration—APIs, webhooks, pre-built connectors for common platforms. The question isn't \"can it integrate?\" but rather \"what actually needs to integrate?\" Companies that succeed start with minimal integration (often just SSO and basic data sync) and add connections based on actual use cases, not hypothetical ones.</p>\n\n<p><strong>Quick win you can implement today:</strong></p>\n\n<ol>\n  <li><strong>List your critical systems</strong> - What platforms do documents currently touch? (CRM, ERP, email, project management, etc.)</li>\n  <li><strong>Identify must-have vs. nice-to-have integrations</strong> - What absolutely needs to connect Day 1? What can be added later or handled manually?</li>\n  <li><strong>Map the data flow</strong> - For each critical system, what data needs to flow which direction? (Often it's simpler than you think)</li>\n  <li><strong>Ask vendors about your specific integrations</strong> - Don't research generally—ask specifically: \"How do you integrate with [your system name]?\"</li>\n</ol>\n\n<p>You're not solving all integration challenges—just separating real technical constraints from perceived ones.</p>\n\n<p><strong>Your next step:</strong></p>\n\n<p>You've completed all three steps of the Quick Document Health Check. You know where your documents are, what's costing you the most, and what's blocking you from fixing it.</p>\n\n<p><strong>Now let's put it all together.</strong></p>\n\n<p>In 3 days, I'll send you a personalized assessment that shows how your three answers create a specific path forward—and what you should do next based on your unique situation.</p>\n\n<p>Allie</p>\n\n<p>P.S. - Integration concerns are valid, but they're also the most common excuse for inaction. The companies that succeed treat integration as an ongoing process, not a Day 1 requirement. Start with core functionality, prove value, then add integrations based on actual need rather than anticipated complexity.</p>",
+        "notes": "Obstacle: Technical integration concerns\nTrigger: Survey 3 answer = \"Technical integration concerns\"\nSend timing: Immediately after Survey 3 completion\nTags: PathA_Survey3_Complete, PathA_S3_Integration\nNext email: Email 4 (synthesis with all three survey answers + CTA) sends automatically in 3 days\nQuick win: 4-step process for identifying critical vs. nice-to-have integrations\nCTA: None (passive wait for Email 4 synthesis)\nVariable tracking: Survey1_Answer + Survey2_Answer + Survey3_Answer stored for Email 4 synthesis",
+        "emailTemplate": "blank",
+        "mjmlTemplate": ""
+      },
+      "width": 250,
+      "height": 226,
+      "selected": false,
+      "dragging": false,
+      "positionAbsolute": {
+        "x": 611.9999999999995,
+        "y": 2335.999999999999
+      }
+    },
+    {
+      "id": "node_30",
+      "type": "email",
+      "position": {
+        "x": -53.43004202183727,
+        "y": 2804.371386239477
+      },
+      "data": {
+        "label": "Email Node",
+        "content": "",
+        "description": "",
+        "subject": "",
+        "subjectVariants": [
+          {
+            "id": "A",
+            "subject": "",
+            "weight": 33
+          },
+          {
+            "id": "B",
+            "subject": "",
+            "weight": 33
+          },
+          {
+            "id": "C",
+            "subject": "",
+            "weight": 34
+          }
+        ],
+        "emailContent": ""
+      },
+      "width": 200,
+      "height": 130,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -53.43004202183727,
+        "y": 2804.371386239477
+      },
+      "dragging": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "node_0",
+      "sourceHandle": null,
+      "target": "node_1",
+      "targetHandle": null,
+      "label": "",
+      "style": {},
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "id": "reactflow__edge-node_0-node_1"
+    },
+    {
+      "source": "node_1",
+      "sourceHandle": "path_1760468506048",
+      "target": "node_6",
+      "targetHandle": null,
+      "label": "Path 5",
+      "style": {
+        "stroke": "#8b5cf6"
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "id": "reactflow__edge-node_1path_1760468506048-node_6"
+    },
+    {
+      "source": "node_1",
+      "sourceHandle": "path_1",
+      "target": "node_14",
+      "targetHandle": null,
+      "label": "Path 1",
+      "animated": false,
+      "style": {
+        "stroke": "#10b981",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#10b981"
+      },
+      "id": "reactflow__edge-node_1path_1-node_14"
+    },
+    {
+      "source": "node_1",
+      "sourceHandle": "path_2",
+      "target": "node_15",
+      "targetHandle": null,
+      "label": "Path 2",
+      "animated": false,
+      "style": {
+        "stroke": "#3b82f6",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#3b82f6"
+      },
+      "id": "reactflow__edge-node_1path_2-node_15"
+    },
+    {
+      "source": "node_1",
+      "sourceHandle": "path_1760468505582",
+      "target": "node_16",
+      "targetHandle": null,
+      "label": "Path 3",
+      "animated": false,
+      "style": {
+        "stroke": "#f59e0b",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#f59e0b"
+      },
+      "id": "reactflow__edge-node_1path_1760468505582-node_16"
+    },
+    {
+      "source": "node_1",
+      "sourceHandle": "path_1760468505814",
+      "target": "node_17",
+      "targetHandle": null,
+      "label": "Path 4",
+      "animated": false,
+      "style": {
+        "stroke": "#ef4444",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#ef4444"
+      },
+      "id": "reactflow__edge-node_1path_1760468505814-node_17"
+    },
+    {
+      "source": "node_8",
+      "sourceHandle": "path_1",
+      "target": "node_18",
+      "targetHandle": null,
+      "label": "Path 1",
+      "animated": false,
+      "style": {
+        "stroke": "#10b981",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#10b981"
+      },
+      "id": "reactflow__edge-node_8path_1-node_18"
+    },
+    {
+      "source": "node_8",
+      "sourceHandle": "path_2",
+      "target": "node_19",
+      "targetHandle": null,
+      "label": "Path 2",
+      "animated": false,
+      "style": {
+        "stroke": "#3b82f6",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#3b82f6"
+      },
+      "id": "reactflow__edge-node_8path_2-node_19"
+    },
+    {
+      "source": "node_8",
+      "sourceHandle": "path_1760554384279",
+      "target": "node_20",
+      "targetHandle": null,
+      "label": "Path 3",
+      "animated": false,
+      "style": {
+        "stroke": "#f59e0b",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#f59e0b"
+      },
+      "id": "reactflow__edge-node_8path_1760554384279-node_20"
+    },
+    {
+      "source": "node_8",
+      "sourceHandle": "path_1761330382397",
+      "target": "node_21",
+      "targetHandle": null,
+      "label": "Path 4",
+      "animated": false,
+      "style": {
+        "stroke": "#ef4444",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#ef4444"
+      },
+      "id": "reactflow__edge-node_8path_1761330382397-node_21"
+    },
+    {
+      "source": "node_8",
+      "sourceHandle": "path_1761330383623",
+      "target": "node_22",
+      "targetHandle": null,
+      "label": "Path 5",
+      "animated": false,
+      "style": {
+        "stroke": "#8b5cf6",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#8b5cf6"
+      },
+      "id": "reactflow__edge-node_8path_1761330383623-node_22"
+    },
+    {
+      "source": "node_24",
+      "sourceHandle": "path_1",
+      "target": "node_25",
+      "targetHandle": null,
+      "label": "Path 1",
+      "animated": false,
+      "style": {
+        "stroke": "#10b981",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#10b981"
+      },
+      "id": "reactflow__edge-node_24path_1-node_25",
+      "selected": true
+    },
+    {
+      "source": "node_24",
+      "sourceHandle": "path_2",
+      "target": "node_26",
+      "targetHandle": null,
+      "label": "Path 2",
+      "animated": false,
+      "style": {
+        "stroke": "#3b82f6",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#3b82f6"
+      },
+      "id": "reactflow__edge-node_24path_2-node_26",
+      "selected": true
+    },
+    {
+      "source": "node_24",
+      "sourceHandle": "path_1761423540504",
+      "target": "node_27",
+      "targetHandle": null,
+      "label": "Path 3",
+      "animated": false,
+      "style": {
+        "stroke": "#f59e0b",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#f59e0b"
+      },
+      "id": "reactflow__edge-node_24path_1761423540504-node_27",
+      "selected": true
+    },
+    {
+      "source": "node_24",
+      "sourceHandle": "path_1761423540798",
+      "target": "node_28",
+      "targetHandle": null,
+      "label": "Path 4",
+      "animated": false,
+      "style": {
+        "stroke": "#ef4444",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#ef4444"
+      },
+      "id": "reactflow__edge-node_24path_1761423540798-node_28",
+      "selected": true
+    },
+    {
+      "source": "node_24",
+      "sourceHandle": "path_1761423541083",
+      "target": "node_29",
+      "targetHandle": null,
+      "label": "Path 5",
+      "animated": false,
+      "style": {
+        "stroke": "#8b5cf6",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#8b5cf6"
+      },
+      "id": "reactflow__edge-node_24path_1761423541083-node_29",
+      "selected": true
+    },
+    {
+      "source": "node_25",
+      "sourceHandle": null,
+      "target": "node_30",
+      "targetHandle": null,
+      "label": "",
+      "animated": false,
+      "style": {
+        "stroke": "#b1b1b7",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#b1b1b7"
+      },
+      "id": "reactflow__edge-node_25-node_30"
+    },
+    {
+      "source": "node_26",
+      "sourceHandle": null,
+      "target": "node_30",
+      "targetHandle": null,
+      "label": "",
+      "animated": false,
+      "style": {
+        "stroke": "#b1b1b7",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#b1b1b7"
+      },
+      "id": "reactflow__edge-node_26-node_30"
+    },
+    {
+      "source": "node_27",
+      "sourceHandle": null,
+      "target": "node_30",
+      "targetHandle": null,
+      "label": "",
+      "animated": false,
+      "style": {
+        "stroke": "#b1b1b7",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#b1b1b7"
+      },
+      "id": "reactflow__edge-node_27-node_30"
+    },
+    {
+      "source": "node_28",
+      "sourceHandle": null,
+      "target": "node_30",
+      "targetHandle": null,
+      "label": "",
+      "animated": false,
+      "style": {
+        "stroke": "#b1b1b7",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#b1b1b7"
+      },
+      "id": "reactflow__edge-node_28-node_30"
+    },
+    {
+      "source": "node_29",
+      "sourceHandle": null,
+      "target": "node_30",
+      "targetHandle": null,
+      "label": "",
+      "animated": false,
+      "style": {
+        "stroke": "#b1b1b7",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#b1b1b7"
+      },
+      "id": "reactflow__edge-node_29-node_30"
+    },
+    {
+      "source": "node_14",
+      "sourceHandle": null,
+      "target": "node_8",
+      "targetHandle": null,
+      "label": "",
+      "animated": false,
+      "style": {
+        "stroke": "#b1b1b7",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#b1b1b7"
+      },
+      "id": "reactflow__edge-node_14-node_8"
+    },
+    {
+      "source": "node_15",
+      "sourceHandle": null,
+      "target": "node_8",
+      "targetHandle": null,
+      "label": "",
+      "animated": false,
+      "style": {
+        "stroke": "#b1b1b7",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#b1b1b7"
+      },
+      "id": "reactflow__edge-node_15-node_8"
+    },
+    {
+      "source": "node_16",
+      "sourceHandle": null,
+      "target": "node_8",
+      "targetHandle": null,
+      "label": "",
+      "animated": false,
+      "style": {
+        "stroke": "#b1b1b7",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#b1b1b7"
+      },
+      "id": "reactflow__edge-node_16-node_8"
+    },
+    {
+      "source": "node_17",
+      "sourceHandle": null,
+      "target": "node_8",
+      "targetHandle": null,
+      "label": "",
+      "animated": false,
+      "style": {
+        "stroke": "#b1b1b7",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#b1b1b7"
+      },
+      "id": "reactflow__edge-node_17-node_8"
+    },
+    {
+      "source": "node_6",
+      "sourceHandle": null,
+      "target": "node_8",
+      "targetHandle": null,
+      "label": "",
+      "animated": false,
+      "style": {
+        "stroke": "#b1b1b7",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#b1b1b7"
+      },
+      "id": "reactflow__edge-node_6-node_8"
+    },
+    {
+      "source": "node_18",
+      "sourceHandle": null,
+      "target": "node_24",
+      "targetHandle": null,
+      "label": "",
+      "animated": false,
+      "style": {
+        "stroke": "#b1b1b7",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#b1b1b7"
+      },
+      "id": "reactflow__edge-node_18-node_24"
+    },
+    {
+      "source": "node_19",
+      "sourceHandle": null,
+      "target": "node_24",
+      "targetHandle": null,
+      "label": "",
+      "animated": false,
+      "style": {
+        "stroke": "#b1b1b7",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#b1b1b7"
+      },
+      "id": "reactflow__edge-node_19-node_24"
+    },
+    {
+      "source": "node_20",
+      "sourceHandle": null,
+      "target": "node_24",
+      "targetHandle": null,
+      "label": "",
+      "animated": false,
+      "style": {
+        "stroke": "#b1b1b7",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#b1b1b7"
+      },
+      "id": "reactflow__edge-node_20-node_24"
+    },
+    {
+      "source": "node_21",
+      "sourceHandle": null,
+      "target": "node_24",
+      "targetHandle": null,
+      "label": "",
+      "animated": false,
+      "style": {
+        "stroke": "#b1b1b7",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#b1b1b7"
+      },
+      "id": "reactflow__edge-node_21-node_24"
+    },
+    {
+      "source": "node_22",
+      "sourceHandle": null,
+      "target": "node_24",
+      "targetHandle": null,
+      "label": "",
+      "animated": false,
+      "style": {
+        "stroke": "#b1b1b7",
+        "strokeWidth": 2
+      },
+      "labelStyle": {
+        "fontSize": 12,
+        "fontWeight": 500
+      },
+      "labelBgStyle": {
+        "fill": "#fff",
+        "fillOpacity": 0.9
+      },
+      "markerEnd": {
+        "type": "arrowclosed",
+        "color": "#b1b1b7"
+      },
+      "id": "reactflow__edge-node_22-node_24"
+    }
+  ],
+  "variables": []
+};
+
+    // State
+    let scale = 1;
+    let translateX = 0;
+    let translateY = 0;
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let lastTouchDistance = 0;
+
+    // Initialize
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        try {
+          console.log('Initializing mobile viewer...');
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('header').style.display = 'block';
+          document.getElementById('footer').style.display = 'block';
+          document.querySelector('.canvas-container').style.display = 'block';
+          console.log('Rendering campaign...');
+          renderCampaign();
+          console.log('Fitting to view...');
+          fitToView();
+          console.log('Mobile viewer initialized successfully');
+        } catch (error) {
+          console.error('Error initializing mobile viewer:', error);
+          document.getElementById('loading').innerHTML = '<div style="color:red; padding:20px;">Error loading campaign: ' + error.message + '<br><br>Check console for details.</div>';
+        }
+      }, 500);
+    });
+
+    function renderCampaign() {
+      const nodesContainer = document.getElementById('nodes');
+      const connectionsContainer = document.getElementById('connections');
+
+      // Render nodes
+      campaignData.nodes.forEach(node => {
+        const nodeEl = document.createElement('div');
+        nodeEl.className = `node node-${node.type}`;
+        nodeEl.style.left = `${node.position.x}px`;
+        nodeEl.style.top = `${node.position.y}px`;
+        nodeEl.onclick = () => showNodeDetails(node);
+
+        const preview = getNodePreview(node);
+        nodeEl.innerHTML = `
+          <div class="node-header">
+            <span class="node-type-badge badge-${node.type}">${node.type}</span>
+            <span class="node-label">${node.data.label || node.id}</span>
+          </div>
+          <div class="node-preview">${preview}</div>
+        `;
+
+        nodesContainer.appendChild(nodeEl);
+      });
+
+      // Render connections
+      const svgNS = "http://www.w3.org/2000/svg";
+      const defs = document.createElementNS(svgNS, "defs");
+      defs.innerHTML = `
+        <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+          <polygon points="0 0, 10 3, 0 6" fill="#999" />
+        </marker>
+      `;
+      connectionsContainer.appendChild(defs);
+
+      campaignData.edges.forEach(edge => {
+        const sourceNode = campaignData.nodes.find(n => n.id === edge.source);
+        const targetNode = campaignData.nodes.find(n => n.id === edge.target);
+
+        if (sourceNode && targetNode) {
+          const path = document.createElementNS(svgNS, "path");
+          const x1 = sourceNode.position.x + 100;
+          const y1 = sourceNode.position.y + 40;
+          const x2 = targetNode.position.x + 100;
+          const y2 = targetNode.position.y + 40;
+
+          const d = `M ${x1} ${y1} C ${x1 + 100} ${y1}, ${x2 - 100} ${y2}, ${x2} ${y2}`;
+          path.setAttribute("d", d);
+          path.setAttribute("class", "edge");
+          connectionsContainer.appendChild(path);
+        }
+      });
+    }
+
+    function getNodePreview(node) {
+      switch (node.type) {
+        case 'email':
+          return node.data.subject || 'No subject';
+        case 'survey':
+          const qCount = node.data.questions?.length || 0;
+          return `${qCount} question${qCount !== 1 ? 's' : ''}`;
+        case 'conditional':
+          return node.data.condition || 'No condition set';
+        case 'delay':
+          return `Wait ${node.data.delayDuration || 0} ${node.data.delayUnit || 'days'}`;
+        case 'action':
+          return node.data.actionType || 'No action set';
+        default:
+          return '';
+      }
+    }
+
+    function showNodeDetails(node) {
+      try {
+        console.log('Opening node:', node.id, node.type, node.data.label);
+        const modal = document.getElementById('modalOverlay');
+        const title = document.getElementById('modalTitle');
+        const content = document.getElementById('modalContent');
+
+        title.textContent = node.data.label || node.id;
+        const htmlContent = renderNodeContent(node);
+        console.log('Generated HTML length:', htmlContent.length);
+        content.innerHTML = htmlContent;
+        modal.classList.add('active');
+        console.log('Modal opened successfully');
+      } catch (error) {
+        console.error('Error opening node details:', error);
+        alert('Error opening node: ' + error.message + '\n\nNode: ' + node.id + '\nType: ' + node.type);
+      }
+    }
+
+    function renderNodeContent(node) {
+      try {
+        let html = '<div class="field">';
+        html += '<div class="field-label">Node Type</div>';
+        html += '<div class="field-value">' + escapeHtml(node.type.toUpperCase()) + '</div>';
+        html += '</div>';
+
+      if (node.data.description) {
+        html += '<div class="field">';
+        html += '<div class="field-label">Description</div>';
+        html += '<div class="field-value">' + formatMarkdown(node.data.description) + '</div>';
+        html += '</div>';
+      }
+
+      if (node.data.notes) {
+        html += '<div class="field">';
+        html += '<div class="field-label">Notes</div>';
+        html += '<div class="field-value">' + formatMarkdown(node.data.notes) + '</div>';
+        html += '</div>';
+      }
+
+      switch (node.type) {
+        case 'email':
+          if (node.data.subject) {
+            html += '<div class="field">';
+            html += '<div class="field-label">Subject</div>';
+            html += '<div class="field-value">' + escapeHtml(node.data.subject) + '</div>';
+            html += '</div>';
+          }
+          if (node.data.emailContent) {
+            html += '<div class="field">';
+            html += '<div class="field-label">Content</div>';
+            html += '<div class="field-value">' + escapeHtml(stripHtml(node.data.emailContent)) + '</div>';
+            html += '</div>';
+          }
+          break;
+
+        case 'survey':
+          if (node.data.questions?.length) {
+            html += '<div class="field"><div class="field-label">Questions</div>';
+            node.data.questions.forEach((q, idx) => {
+              html += '<div class="question-item">';
+              html += '<div class="question-text">' + (idx + 1) + '. ' + escapeHtml(q.text) + '</div>';
+              html += '<div style="font-size:11px; color:#666; margin-bottom:6px;">Type: ' + escapeHtml(q.questionType) + '</div>';
+              if (q.responseOptions?.length) {
+                q.responseOptions.forEach(opt => {
+                  html += '<div class="option">• ' + escapeHtml(opt.text) + '</div>';
+                });
+              }
+              html += '</div>';
+            });
+            html += '</div>';
+          }
+          break;
+
+        case 'conditional':
+          if (node.data.condition) {
+            html += '<div class="field">';
+            html += '<div class="field-label">Condition</div>';
+            html += '<div class="field-value">' + formatMarkdown(node.data.condition) + '</div>';
+            html += '</div>';
+          }
+          break;
+
+        case 'delay':
+          html += '<div class="field">';
+          html += '<div class="field-label">Duration</div>';
+          html += '<div class="field-value">' + escapeHtml(String(node.data.delayDuration || 0)) + ' ' + escapeHtml(node.data.delayUnit || 'days') + '</div>';
+          html += '</div>';
+          break;
+
+        case 'action':
+          if (node.data.actionType) {
+            html += '<div class="field">';
+            html += '<div class="field-label">Action Type</div>';
+            html += '<div class="field-value">' + escapeHtml(node.data.actionType) + '</div>';
+            html += '</div>';
+          }
+          if (node.data.actionDetails) {
+            html += '<div class="field">';
+            html += '<div class="field-label">Details</div>';
+            html += '<div class="field-value">' + formatMarkdown(node.data.actionDetails) + '</div>';
+            html += '</div>';
+          }
+          break;
+      }
+
+      // Show connections
+      const outgoing = campaignData.edges.filter(e => e.source === node.id);
+      const incoming = campaignData.edges.filter(e => e.target === node.id);
+
+      if (outgoing.length || incoming.length) {
+        html += '<div class="field"><div class="field-label">Connections</div>';
+        if (incoming.length) {
+          const fromNodes = incoming.map(e => {
+            const n = campaignData.nodes.find(n => n.id === e.source);
+            return escapeHtml(n?.data.label || e.source);
+          }).join(', ');
+          html += '<div style="font-size:12px; color:#666; margin-bottom:4px;">← From: ' + fromNodes + '</div>';
+        }
+        if (outgoing.length) {
+          const toNodes = outgoing.map(e => {
+            const n = campaignData.nodes.find(n => n.id === e.target);
+            return escapeHtml(n?.data.label || e.target);
+          }).join(', ');
+          html += '<div style="font-size:12px; color:#666;">→ To: ' + toNodes + '</div>';
+        }
+        html += '</div>';
+      }
+
+      return html;
+      } catch (error) {
+        console.error('Error in renderNodeContent:', error, 'Node:', node);
+        return '<div class="field"><div class="field-value" style="color:red;">Error rendering content: ' + error.message + '</div></div>';
+      }
+    }
+
+    function stripHtml(html) {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      return tmp.textContent || tmp.innerText || '';
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function formatMarkdown(text) {
+      if (!text) return '';
+
+      // Convert markdown to HTML - using string replace for special chars to avoid regex issues
+      let html = text;
+
+      // Bold: **text**
+      while (html.indexOf('**') !== -1) {
+        const start = html.indexOf('**');
+        const end = html.indexOf('**', start + 2);
+        if (end === -1) break;
+        const before = html.substring(0, start);
+        const content = html.substring(start + 2, end);
+        const after = html.substring(end + 2);
+        html = before + '<strong>' + content + '</strong>' + after;
+      }
+
+      // Links: [text](url)
+      let linkStart = html.indexOf('[');
+      while (linkStart !== -1) {
+        const linkEnd = html.indexOf(']', linkStart);
+        const parenStart = linkEnd !== -1 ? html.indexOf('(', linkEnd) : -1;
+        const parenEnd = parenStart !== -1 ? html.indexOf(')', parenStart) : -1;
+        if (linkEnd !== -1 && parenStart === linkEnd + 1 && parenEnd !== -1) {
+          const before = html.substring(0, linkStart);
+          const linkText = html.substring(linkStart + 1, linkEnd);
+          const url = html.substring(parenStart + 1, parenEnd);
+          const after = html.substring(parenEnd + 1);
+          html = before + '<a href="' + url + '" target="_blank">' + linkText + '</a>' + after;
+          linkStart = html.indexOf('[', linkStart + 1);
+        } else {
+          linkStart = html.indexOf('[', linkStart + 1);
+        }
+      }
+
+      // Split by newlines to handle lists and paragraphs
+      const lines = html.split('
+');
+      const processedLines = [];
+      let inList = false;
+      let listType = null;
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+
+        // Numbered list: 1. item, 2. item, etc.
+        const isNumberedList = line.length > 2 &&
+          line.charAt(0) >= '0' && line.charAt(0) <= '9' &&
+          line.charAt(1) === '.' && line.charAt(2) === ' ';
+
+        if (isNumberedList) {
+          if (!inList || listType !== 'ol') {
+            if (inList) processedLines.push('</' + listType + '>');
+            processedLines.push('<ol style="margin: 8px 0; padding-left: 20px;">');
+            inList = true;
+            listType = 'ol';
+          }
+          const content = line.substring(3); // Remove "1. "
+          processedLines.push('<li style="margin: 4px 0;">' + content + '</li>');
+        }
+        // Bullet list: - item or * item
+        else if ((line.charAt(0) === '-' || line.charAt(0) === '*') && line.charAt(1) === ' ') {
+          if (!inList || listType !== 'ul') {
+            if (inList) processedLines.push('</' + listType + '>');
+            processedLines.push('<ul style="margin: 8px 0; padding-left: 20px;">');
+            inList = true;
+            listType = 'ul';
+          }
+          const content = line.substring(2); // Remove "- " or "* "
+          processedLines.push('<li style="margin: 4px 0;">' + content + '</li>');
+        }
+        // Regular line
+        else {
+          if (inList) {
+            processedLines.push('</' + listType + '>');
+            inList = false;
+            listType = null;
+          }
+          if (line) {
+            processedLines.push('<p style="margin: 6px 0;">' + line + '</p>');
+          }
+        }
+      }
+
+      // Close any open list
+      if (inList) {
+        processedLines.push('</' + listType + '>');
+      }
+
+      return processedLines.join('');
+    }
+
+    function closeModal(event) {
+      if (!event || event.target === document.getElementById('modalOverlay')) {
+        document.getElementById('modalOverlay').classList.remove('active');
+      }
+    }
+
+    // Pan & Zoom
+    function updateTransform() {
+      const canvas = document.getElementById('canvas');
+      canvas.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+      document.getElementById('zoomLevel').textContent = `${Math.round(scale * 100)}%`;
+    }
+
+    function zoomIn() {
+      scale = Math.min(scale * 1.2, 3);
+      updateTransform();
+    }
+
+    function zoomOut() {
+      scale = Math.max(scale / 1.2, 0.2);
+      updateTransform();
+    }
+
+    function resetView() {
+      scale = 1;
+      translateX = 0;
+      translateY = 0;
+      updateTransform();
+    }
+
+    function fitToView() {
+      const container = document.querySelector('.canvas-container');
+      const nodes = campaignData.nodes;
+
+      if (nodes.length === 0) return;
+
+      // Use larger node dimensions for mobile (match actual rendered size)
+      const isMobile = window.innerWidth <= 600;
+      const nodeWidth = isMobile ? 280 : 200;
+      const nodeHeight = isMobile ? 140 : 100;
+
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      nodes.forEach(node => {
+        minX = Math.min(minX, node.position.x);
+        minY = Math.min(minY, node.position.y);
+        maxX = Math.max(maxX, node.position.x + nodeWidth);
+        maxY = Math.max(maxY, node.position.y + nodeHeight);
+      });
+
+      const width = maxX - minX;
+      const height = maxY - minY;
+      const containerWidth = container.clientWidth;
+      const containerHeight = container.clientHeight;
+
+      // Set minimum scale to prevent nodes from being too tiny
+      const minScale = isMobile ? 0.5 : 0.3;
+      const maxScale = isMobile ? 1.2 : 1;
+      const calculatedScale = Math.min(containerWidth / width, containerHeight / height, maxScale) * 0.9;
+      scale = Math.max(calculatedScale, minScale);
+
+      translateX = (containerWidth - width * scale) / 2 - minX * scale;
+      translateY = (containerHeight - height * scale) / 2 - minY * scale;
+
+      updateTransform();
+    }
+
+    // Touch & Mouse Events
+    const canvas = document.getElementById('canvas');
+
+    canvas.addEventListener('mousedown', (e) => {
+      if (e.target === canvas || e.target.tagName === 'svg' || e.target.tagName === 'path') {
+        isDragging = true;
+        startX = e.clientX - translateX;
+        startY = e.clientY - translateY;
+        canvas.classList.add('dragging');
+      }
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        translateX = e.clientX - startX;
+        translateY = e.clientY - startY;
+        updateTransform();
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      isDragging = false;
+      canvas.classList.remove('dragging');
+    });
+
+    // Touch events
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        isDragging = true;
+        startX = e.touches[0].clientX - translateX;
+        startY = e.touches[0].clientY - translateY;
+      } else if (e.touches.length === 2) {
+        isDragging = false;
+        lastTouchDistance = getTouchDistance(e.touches);
+      }
+    });
+
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+
+      if (e.touches.length === 1 && isDragging) {
+        translateX = e.touches[0].clientX - startX;
+        translateY = e.touches[0].clientY - startY;
+        updateTransform();
+      } else if (e.touches.length === 2) {
+        const distance = getTouchDistance(e.touches);
+        const delta = distance / lastTouchDistance;
+        scale = Math.max(0.2, Math.min(3, scale * delta));
+        lastTouchDistance = distance;
+        updateTransform();
+      }
+    });
+
+    canvas.addEventListener('touchend', () => {
+      isDragging = false;
+    });
+
+    function getTouchDistance(touches) {
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    // Mouse wheel zoom
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? 0.9 : 1.1;
+      scale = Math.max(0.2, Math.min(3, scale * delta));
+      updateTransform();
+    }, { passive: false });
+  </script>
+</body>
+</html>

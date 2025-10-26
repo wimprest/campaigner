@@ -1179,7 +1179,7 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
       }
 
       // Split by newlines to handle lists and paragraphs
-      const lines = html.split('\n');
+      const lines = html.split(String.fromCharCode(10));
       const processedLines = [];
       let inList = false;
       let listType = null;
