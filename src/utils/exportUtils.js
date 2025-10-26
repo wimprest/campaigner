@@ -1170,7 +1170,12 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
       }
 
       // Split by newlines to handle lists and paragraphs
-      const lines = html.split('\\n');
+      // Handle both actual newlines and escaped newlines using string replacement
+      let normalized = html;
+      while (normalized.indexOf('\\n') !== -1) {
+        normalized = normalized.replace('\\n', '\n');
+      }
+      const lines = normalized.split('\n');
       const processedLines = [];
       let inList = false;
       let listType = null;
