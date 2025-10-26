@@ -1045,7 +1045,7 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
           if (node.data.emailContent) {
             html += '<div class="field">';
             html += '<div class="field-label">Content</div>';
-            html += '<div class="field-value">' + escapeHtml(stripHtml(node.data.emailContent)) + '</div>';
+            html += '<div class="field-value">' + node.data.emailContent + '</div>';
             html += '</div>';
           }
           break;
