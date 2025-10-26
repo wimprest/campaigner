@@ -986,20 +986,30 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
     }
 
     function showNodeDetails(node) {
-      const modal = document.getElementById('modalOverlay');
-      const title = document.getElementById('modalTitle');
-      const content = document.getElementById('modalContent');
+      try {
+        console.log('Opening node:', node.id, node.type, node.data.label);
+        const modal = document.getElementById('modalOverlay');
+        const title = document.getElementById('modalTitle');
+        const content = document.getElementById('modalContent');
 
-      title.textContent = node.data.label || node.id;
-      content.innerHTML = renderNodeContent(node);
-      modal.classList.add('active');
+        title.textContent = node.data.label || node.id;
+        const htmlContent = renderNodeContent(node);
+        console.log('Generated HTML length:', htmlContent.length);
+        content.innerHTML = htmlContent;
+        modal.classList.add('active');
+        console.log('Modal opened successfully');
+      } catch (error) {
+        console.error('Error opening node details:', error);
+        alert('Error opening node: ' + error.message + '\\n\\nNode: ' + node.id + '\\nType: ' + node.type);
+      }
     }
 
     function renderNodeContent(node) {
-      let html = '<div class="field">';
-      html += '<div class="field-label">Node Type</div>';
-      html += '<div class="field-value">' + escapeHtml(node.type.toUpperCase()) + '</div>';
-      html += '</div>';
+      try {
+        let html = '<div class="field">';
+        html += '<div class="field-label">Node Type</div>';
+        html += '<div class="field-value">' + escapeHtml(node.type.toUpperCase()) + '</div>';
+        html += '</div>';
 
       if (node.data.description) {
         html += '<div class="field">';
@@ -1105,6 +1115,10 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
       }
 
       return html;
+      } catch (error) {
+        console.error('Error in renderNodeContent:', error, 'Node:', node);
+        return '<div class="field"><div class="field-value" style="color:red;">Error rendering content: ' + error.message + '</div></div>';
+      }
     }
 
     function stripHtml(html) {
