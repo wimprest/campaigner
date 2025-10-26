@@ -1124,7 +1124,7 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
         // Italic: *text* or _text_
         .replace(/\*(.+?)\*/g, '<em>$1</em>')
         .replace(/_(.+?)_/g, '<em>$1</em>')
-        // Code: \`text\`
+        // Code: text
         .replace(/\`(.+?)\`/g, '<code>$1</code>')
         // Links: [text](url)
         .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank">$1</a>');
@@ -1141,39 +1141,39 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
         // Numbered list: 1. item
         if (/^\d+\.\s/.test(line)) {
           if (!inList || listType !== 'ol') {
-            if (inList) processedLines.push(\`</\${listType}>\`);
+            if (inList) processedLines.push('</' + listType + '>');
             processedLines.push('<ol style="margin: 8px 0; padding-left: 20px;">');
             inList = true;
             listType = 'ol';
           }
-          processedLines.push(\`<li style="margin: 4px 0;">\${line.replace(/^\d+\.\s/, '')}</li>\`);
+          processedLines.push('<li style="margin: 4px 0;">' + line.replace(/^\d+\.\s/, '') + '</li>');
         }
         // Bullet list: - item or * item
         else if (/^[-*]\s/.test(line)) {
           if (!inList || listType !== 'ul') {
-            if (inList) processedLines.push(\`</\${listType}>\`);
+            if (inList) processedLines.push('</' + listType + '>');
             processedLines.push('<ul style="margin: 8px 0; padding-left: 20px;">');
             inList = true;
             listType = 'ul';
           }
-          processedLines.push(\`<li style="margin: 4px 0;">\${line.replace(/^[-*]\s/, '')}</li>\`);
+          processedLines.push('<li style="margin: 4px 0;">' + line.replace(/^[-*]\s/, '') + '</li>');
         }
         // Regular line
         else {
           if (inList) {
-            processedLines.push(\`</\${listType}>\`);
+            processedLines.push('</' + listType + '>');
             inList = false;
             listType = null;
           }
           if (line) {
-            processedLines.push(\`<p style="margin: 6px 0;">\${line}</p>\`);
+            processedLines.push('<p style="margin: 6px 0;">' + line + '</p>');
           }
         }
       }
 
       // Close any open list
       if (inList) {
-        processedLines.push(\`</\${listType}>\`);
+        processedLines.push('</' + listType + '>');
       }
 
       return processedLines.join('');
