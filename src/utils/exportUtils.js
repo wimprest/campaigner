@@ -740,6 +740,27 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
       word-wrap: break-word;
     }
 
+    /* Normalize email content spacing */
+    .field-value p {
+      margin: 0 0 8px 0;
+    }
+    .field-value p:last-child {
+      margin-bottom: 0;
+    }
+    .field-value ul, .field-value ol {
+      margin: 8px 0;
+      padding-left: 24px;
+    }
+    .field-value li {
+      margin: 4px 0;
+    }
+    .field-value strong {
+      font-weight: 600;
+    }
+    .field-value br {
+      display: none;
+    }
+
     .question-item {
       background: #f8f8f8;
       padding: 12px;
