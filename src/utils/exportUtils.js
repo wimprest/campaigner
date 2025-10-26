@@ -1137,18 +1137,18 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
     function formatMarkdown(text) {
       if (!text) return '';
 
-      // Convert markdown to HTML
+      // Convert markdown to HTML using RegExp constructor to avoid template literal issues
       let html = text
         // Bold: **text** or __text__
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        .replace(/__(.+?)__/g, '<strong>$1</strong>')
+        .replace(new RegExp('\\\\*\\\\*(.+?)\\\\*\\\\*', 'g'), '<strong>$1</strong>')
+        .replace(new RegExp('__(.+?)__', 'g'), '<strong>$1</strong>')
         // Italic: *text* or _text_
-        .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        .replace(/_(.+?)_/g, '<em>$1</em>')
+        .replace(new RegExp('\\\\*(.+?)\\\\*', 'g'), '<em>$1</em>')
+        .replace(new RegExp('_(.+?)_', 'g'), '<em>$1</em>')
         // Code: text
-        .replace(/\`(.+?)\`/g, '<code>$1</code>')
+        .replace(new RegExp('`(.+?)`', 'g'), '<code>$1</code>')
         // Links: [text](url)
-        .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank">$1</a>');
+        .replace(new RegExp('\\\\[(.+?)\\\\]\\\\((.+?)\\\\)', 'g'), '<a href="$2" target="_blank">$1</a>');
 
       // Split by newlines to handle lists and paragraphs
       const lines = html.split('\\n');
@@ -1160,24 +1160,24 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
         const line = lines[i].trim();
 
         // Numbered list: 1. item
-        if (/^\d+\.\s/.test(line)) {
+        if (new RegExp('^\\\\d+\\\\.\\\\s').test(line)) {
           if (!inList || listType !== 'ol') {
             if (inList) processedLines.push('</' + listType + '>');
             processedLines.push('<ol style="margin: 8px 0; padding-left: 20px;">');
             inList = true;
             listType = 'ol';
           }
-          processedLines.push('<li style="margin: 4px 0;">' + line.replace(/^\d+\.\s/, '') + '</li>');
+          processedLines.push('<li style="margin: 4px 0;">' + line.replace(new RegExp('^\\\\d+\\\\.\\\\s'), '') + '</li>');
         }
         // Bullet list: - item or * item
-        else if (/^[-*]\s/.test(line)) {
+        else if (new RegExp('^[-*]\\\\s').test(line)) {
           if (!inList || listType !== 'ul') {
             if (inList) processedLines.push('</' + listType + '>');
             processedLines.push('<ul style="margin: 8px 0; padding-left: 20px;">');
             inList = true;
             listType = 'ul';
           }
-          processedLines.push('<li style="margin: 4px 0;">' + line.replace(/^[-*]\s/, '') + '</li>');
+          processedLines.push('<li style="margin: 4px 0;">' + line.replace(new RegExp('^[-*]\\\\s'), '') + '</li>');
         }
         // Regular line
         else {
