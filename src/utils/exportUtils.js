@@ -1137,18 +1137,37 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
     function formatMarkdown(text) {
       if (!text) return '';
 
-      // Convert markdown to HTML using RegExp constructor to avoid template literal issues
-      let html = text
-        // Bold: **text** or __text__
-        .replace(new RegExp('\\\\*\\\\*(.+?)\\\\*\\\\*', 'g'), '<strong>$1</strong>')
-        .replace(new RegExp('__(.+?)__', 'g'), '<strong>$1</strong>')
-        // Italic: *text* or _text_
-        .replace(new RegExp('\\\\*(.+?)\\\\*', 'g'), '<em>$1</em>')
-        .replace(new RegExp('_(.+?)_', 'g'), '<em>$1</em>')
-        // Code: text
-        .replace(new RegExp('`(.+?)`', 'g'), '<code>$1</code>')
-        // Links: [text](url)
-        .replace(new RegExp('\\\\[(.+?)\\\\]\\\\((.+?)\\\\)', 'g'), '<a href="$2" target="_blank">$1</a>');
+      // Convert markdown to HTML - using string replace for special chars to avoid regex issues
+      let html = text;
+
+      // Bold: **text**
+      while (html.indexOf('**') !== -1) {
+        const start = html.indexOf('**');
+        const end = html.indexOf('**', start + 2);
+        if (end === -1) break;
+        const before = html.substring(0, start);
+        const content = html.substring(start + 2, end);
+        const after = html.substring(end + 2);
+        html = before + '<strong>' + content + '</strong>' + after;
+      }
+
+      // Links: [text](url)
+      let linkStart = html.indexOf('[');
+      while (linkStart !== -1) {
+        const linkEnd = html.indexOf(']', linkStart);
+        const parenStart = linkEnd !== -1 ? html.indexOf('(', linkEnd) : -1;
+        const parenEnd = parenStart !== -1 ? html.indexOf(')', parenStart) : -1;
+        if (linkEnd !== -1 && parenStart === linkEnd + 1 && parenEnd !== -1) {
+          const before = html.substring(0, linkStart);
+          const linkText = html.substring(linkStart + 1, linkEnd);
+          const url = html.substring(parenStart + 1, parenEnd);
+          const after = html.substring(parenEnd + 1);
+          html = before + '<a href="' + url + '" target="_blank">' + linkText + '</a>' + after;
+          linkStart = html.indexOf('[', linkStart + 1);
+        } else {
+          linkStart = html.indexOf('[', linkStart + 1);
+        }
+      }
 
       // Split by newlines to handle lists and paragraphs
       const lines = html.split('\\n');
@@ -1159,25 +1178,31 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
 
-        // Numbered list: 1. item
-        if (new RegExp('^\\\\d+\\\\.\\\\s').test(line)) {
+        // Numbered list: 1. item, 2. item, etc.
+        const isNumberedList = line.length > 2 &&
+          line.charAt(0) >= '0' && line.charAt(0) <= '9' &&
+          line.charAt(1) === '.' && line.charAt(2) === ' ';
+
+        if (isNumberedList) {
           if (!inList || listType !== 'ol') {
             if (inList) processedLines.push('</' + listType + '>');
             processedLines.push('<ol style="margin: 8px 0; padding-left: 20px;">');
             inList = true;
             listType = 'ol';
           }
-          processedLines.push('<li style="margin: 4px 0;">' + line.replace(new RegExp('^\\\\d+\\\\.\\\\s'), '') + '</li>');
+          const content = line.substring(3); // Remove "1. "
+          processedLines.push('<li style="margin: 4px 0;">' + content + '</li>');
         }
         // Bullet list: - item or * item
-        else if (new RegExp('^[-*]\\\\s').test(line)) {
+        else if ((line.charAt(0) === '-' || line.charAt(0) === '*') && line.charAt(1) === ' ') {
           if (!inList || listType !== 'ul') {
             if (inList) processedLines.push('</' + listType + '>');
             processedLines.push('<ul style="margin: 8px 0; padding-left: 20px;">');
             inList = true;
             listType = 'ul';
           }
-          processedLines.push('<li style="margin: 4px 0;">' + line.replace(new RegExp('^[-*]\\\\s'), '') + '</li>');
+          const content = line.substring(2); // Remove "- " or "* "
+          processedLines.push('<li style="margin: 4px 0;">' + content + '</li>');
         }
         // Regular line
         else {
