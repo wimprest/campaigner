@@ -1004,7 +1004,14 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
       if (node.data.description) {
         html += \`<div class="field">
           <div class="field-label">Description</div>
-          <div class="field-value">\${node.data.description}</div>
+          <div class="field-value">\${formatMarkdown(node.data.description)}</div>
+        </div>\`;
+      }
+
+      if (node.data.notes) {
+        html += \`<div class="field">
+          <div class="field-label">Notes</div>
+          <div class="field-value">\${formatMarkdown(node.data.notes)}</div>
         </div>\`;
       }
 
@@ -1047,7 +1054,7 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
           if (node.data.condition) {
             html += \`<div class="field">
               <div class="field-label">Condition</div>
-              <div class="field-value">\${node.data.condition}</div>
+              <div class="field-value">\${formatMarkdown(node.data.condition)}</div>
             </div>\`;
           }
           break;
@@ -1069,7 +1076,7 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
           if (node.data.actionDetails) {
             html += \`<div class="field">
               <div class="field-label">Details</div>
-              <div class="field-value">\${node.data.actionDetails}</div>
+              <div class="field-value">\${formatMarkdown(node.data.actionDetails)}</div>
             </div>\`;
           }
           break;
@@ -1104,6 +1111,72 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
       const tmp = document.createElement('div');
       tmp.innerHTML = html;
       return tmp.textContent || tmp.innerText || '';
+    }
+
+    function formatMarkdown(text) {
+      if (!text) return '';
+
+      // Convert markdown to HTML
+      let html = text
+        // Bold: **text** or __text__
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/__(.+?)__/g, '<strong>$1</strong>')
+        // Italic: *text* or _text_
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/_(.+?)_/g, '<em>$1</em>')
+        // Code: \`text\`
+        .replace(/\`(.+?)\`/g, '<code>$1</code>')
+        // Links: [text](url)
+        .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+      // Split by newlines to handle lists and paragraphs
+      const lines = html.split('\\n');
+      const processedLines = [];
+      let inList = false;
+      let listType = null;
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+
+        // Numbered list: 1. item
+        if (/^\d+\.\s/.test(line)) {
+          if (!inList || listType !== 'ol') {
+            if (inList) processedLines.push(\`</\${listType}>\`);
+            processedLines.push('<ol style="margin: 8px 0; padding-left: 20px;">');
+            inList = true;
+            listType = 'ol';
+          }
+          processedLines.push(\`<li style="margin: 4px 0;">\${line.replace(/^\d+\.\s/, '')}</li>\`);
+        }
+        // Bullet list: - item or * item
+        else if (/^[-*]\s/.test(line)) {
+          if (!inList || listType !== 'ul') {
+            if (inList) processedLines.push(\`</\${listType}>\`);
+            processedLines.push('<ul style="margin: 8px 0; padding-left: 20px;">');
+            inList = true;
+            listType = 'ul';
+          }
+          processedLines.push(\`<li style="margin: 4px 0;">\${line.replace(/^[-*]\s/, '')}</li>\`);
+        }
+        // Regular line
+        else {
+          if (inList) {
+            processedLines.push(\`</\${listType}>\`);
+            inList = false;
+            listType = null;
+          }
+          if (line) {
+            processedLines.push(\`<p style="margin: 6px 0;">\${line}</p>\`);
+          }
+        }
+      }
+
+      // Close any open list
+      if (inList) {
+        processedLines.push(\`</\${listType}>\`);
+      }
+
+      return processedLines.join('');
     }
 
     function closeModal(event) {
