@@ -23,7 +23,8 @@
       "Bash(git commit:*)",
       "Bash(git rm:*)",
       "Bash(git log:*)",
-      "Bash(node --check:*)"
+      "Bash(node --check:*)",
+      "Read(//tmp/MicrosoftEdgeDownloads/1faa85b5-f7e6-415f-b73d-79d4bd6e3f9e/**)"
     ],
     "deny": [],
     "ask": []
