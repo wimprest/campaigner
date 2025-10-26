@@ -905,12 +905,21 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
     // Initialize
     window.addEventListener('load', () => {
       setTimeout(() => {
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('header').style.display = 'block';
-        document.getElementById('footer').style.display = 'block';
-        document.querySelector('.canvas-container').style.display = 'block';
-        renderCampaign();
-        fitToView();
+        try {
+          console.log('Initializing mobile viewer...');
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('header').style.display = 'block';
+          document.getElementById('footer').style.display = 'block';
+          document.querySelector('.canvas-container').style.display = 'block';
+          console.log('Rendering campaign...');
+          renderCampaign();
+          console.log('Fitting to view...');
+          fitToView();
+          console.log('Mobile viewer initialized successfully');
+        } catch (error) {
+          console.error('Error initializing mobile viewer:', error);
+          document.getElementById('loading').innerHTML = '<div style="color:red; padding:20px;">Error loading campaign: ' + error.message + '<br><br>Check console for details.</div>';
+        }
       }, 500);
     });
 
@@ -1170,12 +1179,7 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
       }
 
       // Split by newlines to handle lists and paragraphs
-      // Handle both actual newlines and escaped newlines using string replacement
-      let normalized = html;
-      while (normalized.indexOf('\\n') !== -1) {
-        normalized = normalized.replace('\\n', '\n');
-      }
-      const lines = normalized.split('\n');
+      const lines = html.split('\n');
       const processedLines = [];
       let inList = false;
       let listType = null;
