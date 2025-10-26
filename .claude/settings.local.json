@@ -19,7 +19,11 @@
       "Bash(tree:*)",
       "Bash(dir:*)",
       "Bash(findstr:*)",
-      "Read(//c/Users/pR0XY/**)"
+      "Read(//c/Users/pR0XY/**)",
+      "Bash(git commit:*)",
+      "Bash(git rm:*)",
+      "Bash(git log:*)",
+      "Bash(node --check:*)"
     ],
     "deny": [],
     "ask": []

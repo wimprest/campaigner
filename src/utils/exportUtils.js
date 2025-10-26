@@ -825,10 +825,15 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
       h1 { font-size: 16px; }
       .stats { font-size: 11px; gap: 8px; }
       .stat-badge { padding: 3px 6px; }
-      .node { min-width: 160px; max-width: 200px; padding: 12px; }
-      .node-label { font-size: 13px; }
-      .node-preview { font-size: 11px; }
-      .control-btn { padding: 8px 12px; font-size: 13px; }
+      .node {
+        min-width: 220px !important;
+        max-width: 320px !important;
+        padding: 16px !important;
+        font-size: 14px;
+      }
+      .node-label { font-size: 14px !important; }
+      .node-preview { font-size: 12px !important; }
+      .control-btn { padding: 10px 14px; font-size: 14px; }
     }
 
     /* Loading */
@@ -1137,12 +1142,17 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
 
       if (nodes.length === 0) return;
 
+      // Use larger node dimensions for mobile (match actual rendered size)
+      const isMobile = window.innerWidth <= 600;
+      const nodeWidth = isMobile ? 280 : 200;
+      const nodeHeight = isMobile ? 140 : 100;
+
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
       nodes.forEach(node => {
         minX = Math.min(minX, node.position.x);
         minY = Math.min(minY, node.position.y);
-        maxX = Math.max(maxX, node.position.x + 200);
-        maxY = Math.max(maxY, node.position.y + 100);
+        maxX = Math.max(maxX, node.position.x + nodeWidth);
+        maxY = Math.max(maxY, node.position.y + nodeHeight);
       });
 
       const width = maxX - minX;
@@ -1150,7 +1160,12 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
       const containerWidth = container.clientWidth;
       const containerHeight = container.clientHeight;
 
-      scale = Math.min(containerWidth / width, containerHeight / height, 1) * 0.9;
+      // Set minimum scale to prevent nodes from being too tiny
+      const minScale = isMobile ? 0.5 : 0.3;
+      const maxScale = isMobile ? 1.2 : 1;
+      const calculatedScale = Math.min(containerWidth / width, containerHeight / height, maxScale) * 0.9;
+      scale = Math.max(calculatedScale, minScale);
+
       translateX = (containerWidth - width * scale) / 2 - minX * scale;
       translateY = (containerHeight - height * scale) / 2 - minY * scale;
 
