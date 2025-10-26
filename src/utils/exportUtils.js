@@ -998,7 +998,7 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
     function renderNodeContent(node) {
       let html = '<div class="field">';
       html += '<div class="field-label">Node Type</div>';
-      html += '<div class="field-value">' + node.type.toUpperCase() + '</div>';
+      html += '<div class="field-value">' + escapeHtml(node.type.toUpperCase()) + '</div>';
       html += '</div>';
 
       if (node.data.description) {
@@ -1020,13 +1020,13 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
           if (node.data.subject) {
             html += '<div class="field">';
             html += '<div class="field-label">Subject</div>';
-            html += '<div class="field-value">' + node.data.subject + '</div>';
+            html += '<div class="field-value">' + escapeHtml(node.data.subject) + '</div>';
             html += '</div>';
           }
           if (node.data.emailContent) {
             html += '<div class="field">';
             html += '<div class="field-label">Content</div>';
-            html += '<div class="field-value">' + stripHtml(node.data.emailContent) + '</div>';
+            html += '<div class="field-value">' + escapeHtml(stripHtml(node.data.emailContent)) + '</div>';
             html += '</div>';
           }
           break;
@@ -1036,11 +1036,11 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
             html += '<div class="field"><div class="field-label">Questions</div>';
             node.data.questions.forEach((q, idx) => {
               html += '<div class="question-item">';
-              html += '<div class="question-text">' + (idx + 1) + '. ' + q.text + '</div>';
-              html += '<div style="font-size:11px; color:#666; margin-bottom:6px;">Type: ' + q.questionType + '</div>';
+              html += '<div class="question-text">' + (idx + 1) + '. ' + escapeHtml(q.text) + '</div>';
+              html += '<div style="font-size:11px; color:#666; margin-bottom:6px;">Type: ' + escapeHtml(q.questionType) + '</div>';
               if (q.responseOptions?.length) {
                 q.responseOptions.forEach(opt => {
-                  html += '<div class="option">• ' + opt.text + '</div>';
+                  html += '<div class="option">• ' + escapeHtml(opt.text) + '</div>';
                 });
               }
               html += '</div>';
@@ -1061,7 +1061,7 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
         case 'delay':
           html += '<div class="field">';
           html += '<div class="field-label">Duration</div>';
-          html += '<div class="field-value">' + (node.data.delayDuration || 0) + ' ' + (node.data.delayUnit || 'days') + '</div>';
+          html += '<div class="field-value">' + escapeHtml(String(node.data.delayDuration || 0)) + ' ' + escapeHtml(node.data.delayUnit || 'days') + '</div>';
           html += '</div>';
           break;
 
@@ -1069,7 +1069,7 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
           if (node.data.actionType) {
             html += '<div class="field">';
             html += '<div class="field-label">Action Type</div>';
-            html += '<div class="field-value">' + node.data.actionType + '</div>';
+            html += '<div class="field-value">' + escapeHtml(node.data.actionType) + '</div>';
             html += '</div>';
           }
           if (node.data.actionDetails) {
@@ -1090,14 +1090,14 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
         if (incoming.length) {
           const fromNodes = incoming.map(e => {
             const n = campaignData.nodes.find(n => n.id === e.source);
-            return n?.data.label || e.source;
+            return escapeHtml(n?.data.label || e.source);
           }).join(', ');
           html += '<div style="font-size:12px; color:#666; margin-bottom:4px;">← From: ' + fromNodes + '</div>';
         }
         if (outgoing.length) {
           const toNodes = outgoing.map(e => {
             const n = campaignData.nodes.find(n => n.id === e.target);
-            return n?.data.label || e.target;
+            return escapeHtml(n?.data.label || e.target);
           }).join(', ');
           html += '<div style="font-size:12px; color:#666;">→ To: ' + toNodes + '</div>';
         }
@@ -1111,6 +1111,13 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
       const tmp = document.createElement('div');
       tmp.innerHTML = html;
       return tmp.textContent || tmp.innerText || '';
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
     }
 
     function formatMarkdown(text) {
