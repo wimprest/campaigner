@@ -24,7 +24,7 @@ import SurveyNode from './components/nodes/SurveyNode'
 import ConditionalNode from './components/nodes/ConditionalNode'
 import ActionNode from './components/nodes/ActionNode'
 import DelayNode from './components/nodes/DelayNode'
-import { exportCampaignJSON, exportAllEmailsAsZip, exportAsInteractiveHTML, exportSelectedNodesJSON } from './utils/exportUtils'
+import { exportCampaignJSON, exportAllEmailsAsZip, exportAsInteractiveHTML, exportAsMobileViewer, exportSelectedNodesJSON } from './utils/exportUtils'
 import { loadTemplate } from './utils/campaignTemplates'
 import { validateCampaign } from './utils/campaignValidation'
 import { convertEmailsToNodes } from './utils/emailParser'
@@ -301,6 +301,10 @@ function FlowBuilder() {
   const handleExportHTML = useCallback(() => {
     exportAsInteractiveHTML(nodes, edges, campaignName)
   }, [campaignName, nodes, edges])
+
+  const handleExportMobileViewer = useCallback(() => {
+    exportAsMobileViewer(nodes, edges, campaignName, variables)
+  }, [campaignName, nodes, edges, variables])
 
   const handleExportSelection = useCallback(() => {
     const selectedNodes = nodes.filter(node => node.selected)
@@ -1046,6 +1050,7 @@ function FlowBuilder() {
         onOpenBulkImport={handleOpenBulkImport}
         onExportEmails={handleExportEmails}
         onExportHTML={handleExportHTML}
+        onExportMobileViewer={handleExportMobileViewer}
         onExportSelection={handleExportSelection}
         onClear={clearCanvas}
         onValidate={handleValidateCampaign}

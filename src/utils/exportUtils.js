@@ -456,3 +456,783 @@ function getReadableTimestamp() {
   const seconds = String(now.getSeconds()).padStart(2, '0')
   return `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`
 }
+
+// Export campaign as mobile-optimized viewer HTML
+export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', variables = []) => {
+  const timestamp = getReadableTimestamp()
+  const filename = `${campaignName.replace(/[^a-z0-9]/gi, '_')}-mobile-viewer-${timestamp}.html`
+
+  const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>${campaignName} - Mobile Viewer</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    /* Header */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(10px);
+      padding: 12px 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 18px;
+      color: #333;
+      font-weight: 600;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .stats {
+      display: flex;
+      gap: 12px;
+      font-size: 12px;
+      color: #666;
+      align-items: center;
+    }
+
+    .stat-badge {
+      background: #f0f0f0;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+
+    /* Canvas Container */
+    .canvas-container {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      right: 0;
+      bottom: 60px;
+      overflow: hidden;
+    }
+
+    .canvas {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      cursor: grab;
+      transform-origin: 0 0;
+    }
+
+    .canvas.dragging {
+      cursor: grabbing;
+    }
+
+    /* Nodes */
+    .node {
+      position: absolute;
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      min-width: 200px;
+      max-width: 280px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: 2px solid transparent;
+    }
+
+    .node:active {
+      transform: scale(0.98);
+    }
+
+    .node-email { border-color: #2196F3; }
+    .node-survey { border-color: #4CAF50; }
+    .node-conditional { border-color: #9C27B0; }
+    .node-action { border-color: #FF9800; }
+    .node-delay { border-color: #F44336; }
+
+    .node-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .node-type-badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
+      margin-right: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-email { background: #2196F3; }
+    .badge-survey { background: #4CAF50; }
+    .badge-conditional { background: #9C27B0; }
+    .badge-action { background: #FF9800; }
+    .badge-delay { background: #F44336; }
+
+    .node-label {
+      font-weight: 600;
+      font-size: 14px;
+      color: #333;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .node-preview {
+      font-size: 12px;
+      color: #666;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      line-height: 1.4;
+    }
+
+    /* Connections */
+    svg.connections {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .edge {
+      stroke: #999;
+      stroke-width: 2;
+      fill: none;
+      marker-end: url(#arrowhead);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 2000;
+      backdrop-filter: blur(4px);
+      animation: fadeIn 0.2s;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal {
+      background: white;
+      border-radius: 16px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: slideUp 0.3s;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header {
+      padding: 20px;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: white;
+      z-index: 1;
+      border-radius: 16px 16px 0 0;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .close-btn {
+      background: #f0f0f0;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .close-btn:active {
+      background: #e0e0e0;
+    }
+
+    .modal-content {
+      padding: 20px;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field-label {
+      font-weight: 600;
+      font-size: 12px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .field-value {
+      color: #333;
+      font-size: 14px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .question-item {
+      background: #f8f8f8;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+
+    .question-text {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .option {
+      padding: 6px 12px;
+      background: white;
+      border-radius: 6px;
+      margin: 4px 0;
+      font-size: 13px;
+    }
+
+    .path-item {
+      background: #f0f0f0;
+      padding: 10px;
+      border-radius: 8px;
+      margin: 8px 0;
+      border-left: 3px solid #999;
+    }
+
+    /* Footer Controls */
+    .footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(10px);
+      padding: 12px 16px;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+      border-top: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      align-items: center;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .control-btn {
+      background: white;
+      border: 1px solid #ddd;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .control-btn:active {
+      transform: scale(0.95);
+      background: #f0f0f0;
+    }
+
+    .zoom-level {
+      font-size: 13px;
+      color: #666;
+      font-weight: 500;
+      min-width: 50px;
+      text-align: center;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      h1 { font-size: 16px; }
+      .stats { font-size: 11px; gap: 8px; }
+      .stat-badge { padding: 3px 6px; }
+      .node { min-width: 160px; max-width: 200px; padding: 12px; }
+      .node-label { font-size: 13px; }
+      .node-preview { font-size: 11px; }
+      .control-btn { padding: 8px 12px; font-size: 13px; }
+    }
+
+    /* Loading */
+    .loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 18px;
+      font-weight: 600;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="loading" id="loading">Loading campaign...</div>
+
+  <div class="header" id="header" style="display:none;">
+    <div class="header-content">
+      <h1 id="campaignName">${campaignName}</h1>
+      <div class="stats">
+        <span class="stat-badge" id="nodeCount">${nodes.length} nodes</span>
+        <span class="stat-badge" id="edgeCount">${edges.length} edges</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="canvas-container" style="display:none;">
+    <div class="canvas" id="canvas">
+      <svg class="connections" id="connections"></svg>
+      <div id="nodes"></div>
+    </div>
+  </div>
+
+  <div class="footer" id="footer" style="display:none;">
+    <div class="controls">
+      <button class="control-btn" onclick="resetView()">↺ Reset</button>
+      <button class="control-btn" onclick="zoomOut()">−</button>
+      <span class="zoom-level" id="zoomLevel">100%</span>
+      <button class="control-btn" onclick="zoomIn()">+</button>
+      <button class="control-btn" onclick="fitToView()">⤢ Fit</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <span class="modal-title" id="modalTitle"></span>
+        <button class="close-btn" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-content" id="modalContent"></div>
+    </div>
+  </div>
+
+  <script>
+    // Campaign Data
+    const campaignData = ${JSON.stringify({ nodes, edges, variables }, null, 2)};
+
+    // State
+    let scale = 1;
+    let translateX = 0;
+    let translateY = 0;
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let lastTouchDistance = 0;
+
+    // Initialize
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('header').style.display = 'block';
+        document.getElementById('footer').style.display = 'block';
+        document.querySelector('.canvas-container').style.display = 'block';
+        renderCampaign();
+        fitToView();
+      }, 500);
+    });
+
+    function renderCampaign() {
+      const nodesContainer = document.getElementById('nodes');
+      const connectionsContainer = document.getElementById('connections');
+
+      // Render nodes
+      campaignData.nodes.forEach(node => {
+        const nodeEl = document.createElement('div');
+        nodeEl.className = \`node node-\${node.type}\`;
+        nodeEl.style.left = \`\${node.position.x}px\`;
+        nodeEl.style.top = \`\${node.position.y}px\`;
+        nodeEl.onclick = () => showNodeDetails(node);
+
+        const preview = getNodePreview(node);
+        nodeEl.innerHTML = \`
+          <div class="node-header">
+            <span class="node-type-badge badge-\${node.type}">\${node.type}</span>
+            <span class="node-label">\${node.data.label || node.id}</span>
+          </div>
+          <div class="node-preview">\${preview}</div>
+        \`;
+
+        nodesContainer.appendChild(nodeEl);
+      });
+
+      // Render connections
+      const svgNS = "http://www.w3.org/2000/svg";
+      const defs = document.createElementNS(svgNS, "defs");
+      defs.innerHTML = \`
+        <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+          <polygon points="0 0, 10 3, 0 6" fill="#999" />
+        </marker>
+      \`;
+      connectionsContainer.appendChild(defs);
+
+      campaignData.edges.forEach(edge => {
+        const sourceNode = campaignData.nodes.find(n => n.id === edge.source);
+        const targetNode = campaignData.nodes.find(n => n.id === edge.target);
+
+        if (sourceNode && targetNode) {
+          const path = document.createElementNS(svgNS, "path");
+          const x1 = sourceNode.position.x + 100;
+          const y1 = sourceNode.position.y + 40;
+          const x2 = targetNode.position.x + 100;
+          const y2 = targetNode.position.y + 40;
+
+          const d = \`M \${x1} \${y1} C \${x1 + 100} \${y1}, \${x2 - 100} \${y2}, \${x2} \${y2}\`;
+          path.setAttribute("d", d);
+          path.setAttribute("class", "edge");
+          connectionsContainer.appendChild(path);
+        }
+      });
+    }
+
+    function getNodePreview(node) {
+      switch (node.type) {
+        case 'email':
+          return node.data.subject || 'No subject';
+        case 'survey':
+          const qCount = node.data.questions?.length || 0;
+          return \`\${qCount} question\${qCount !== 1 ? 's' : ''}\`;
+        case 'conditional':
+          return node.data.condition || 'No condition set';
+        case 'delay':
+          return \`Wait \${node.data.delayDuration || 0} \${node.data.delayUnit || 'days'}\`;
+        case 'action':
+          return node.data.actionType || 'No action set';
+        default:
+          return '';
+      }
+    }
+
+    function showNodeDetails(node) {
+      const modal = document.getElementById('modalOverlay');
+      const title = document.getElementById('modalTitle');
+      const content = document.getElementById('modalContent');
+
+      title.textContent = node.data.label || node.id;
+      content.innerHTML = renderNodeContent(node);
+      modal.classList.add('active');
+    }
+
+    function renderNodeContent(node) {
+      let html = \`<div class="field">
+        <div class="field-label">Node Type</div>
+        <div class="field-value">\${node.type.toUpperCase()}</div>
+      </div>\`;
+
+      if (node.data.description) {
+        html += \`<div class="field">
+          <div class="field-label">Description</div>
+          <div class="field-value">\${node.data.description}</div>
+        </div>\`;
+      }
+
+      switch (node.type) {
+        case 'email':
+          if (node.data.subject) {
+            html += \`<div class="field">
+              <div class="field-label">Subject</div>
+              <div class="field-value">\${node.data.subject}</div>
+            </div>\`;
+          }
+          if (node.data.emailContent) {
+            html += \`<div class="field">
+              <div class="field-label">Content</div>
+              <div class="field-value">\${stripHtml(node.data.emailContent)}</div>
+            </div>\`;
+          }
+          break;
+
+        case 'survey':
+          if (node.data.questions?.length) {
+            html += \`<div class="field">
+              <div class="field-label">Questions</div>\`;
+            node.data.questions.forEach((q, idx) => {
+              html += \`<div class="question-item">
+                <div class="question-text">\${idx + 1}. \${q.text}</div>
+                <div style="font-size:11px; color:#666; margin-bottom:6px;">Type: \${q.questionType}</div>\`;
+              if (q.responseOptions?.length) {
+                q.responseOptions.forEach(opt => {
+                  html += \`<div class="option">• \${opt.text}</div>\`;
+                });
+              }
+              html += \`</div>\`;
+            });
+            html += \`</div>\`;
+          }
+          break;
+
+        case 'conditional':
+          if (node.data.condition) {
+            html += \`<div class="field">
+              <div class="field-label">Condition</div>
+              <div class="field-value">\${node.data.condition}</div>
+            </div>\`;
+          }
+          break;
+
+        case 'delay':
+          html += \`<div class="field">
+            <div class="field-label">Duration</div>
+            <div class="field-value">\${node.data.delayDuration || 0} \${node.data.delayUnit || 'days'}</div>
+          </div>\`;
+          break;
+
+        case 'action':
+          if (node.data.actionType) {
+            html += \`<div class="field">
+              <div class="field-label">Action Type</div>
+              <div class="field-value">\${node.data.actionType}</div>
+            </div>\`;
+          }
+          if (node.data.actionDetails) {
+            html += \`<div class="field">
+              <div class="field-label">Details</div>
+              <div class="field-value">\${node.data.actionDetails}</div>
+            </div>\`;
+          }
+          break;
+      }
+
+      // Show connections
+      const outgoing = campaignData.edges.filter(e => e.source === node.id);
+      const incoming = campaignData.edges.filter(e => e.target === node.id);
+
+      if (outgoing.length || incoming.length) {
+        html += \`<div class="field">
+          <div class="field-label">Connections</div>\`;
+        if (incoming.length) {
+          html += \`<div style="font-size:12px; color:#666; margin-bottom:4px;">← From: \${incoming.map(e => {
+            const n = campaignData.nodes.find(n => n.id === e.source);
+            return n?.data.label || e.source;
+          }).join(', ')}</div>\`;
+        }
+        if (outgoing.length) {
+          html += \`<div style="font-size:12px; color:#666;">→ To: \${outgoing.map(e => {
+            const n = campaignData.nodes.find(n => n.id === e.target);
+            return n?.data.label || e.target;
+          }).join(', ')}</div>\`;
+        }
+        html += \`</div>\`;
+      }
+
+      return html;
+    }
+
+    function stripHtml(html) {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      return tmp.textContent || tmp.innerText || '';
+    }
+
+    function closeModal(event) {
+      if (!event || event.target === document.getElementById('modalOverlay')) {
+        document.getElementById('modalOverlay').classList.remove('active');
+      }
+    }
+
+    // Pan & Zoom
+    function updateTransform() {
+      const canvas = document.getElementById('canvas');
+      canvas.style.transform = \`translate(\${translateX}px, \${translateY}px) scale(\${scale})\`;
+      document.getElementById('zoomLevel').textContent = \`\${Math.round(scale * 100)}%\`;
+    }
+
+    function zoomIn() {
+      scale = Math.min(scale * 1.2, 3);
+      updateTransform();
+    }
+
+    function zoomOut() {
+      scale = Math.max(scale / 1.2, 0.2);
+      updateTransform();
+    }
+
+    function resetView() {
+      scale = 1;
+      translateX = 0;
+      translateY = 0;
+      updateTransform();
+    }
+
+    function fitToView() {
+      const container = document.querySelector('.canvas-container');
+      const nodes = campaignData.nodes;
+
+      if (nodes.length === 0) return;
+
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      nodes.forEach(node => {
+        minX = Math.min(minX, node.position.x);
+        minY = Math.min(minY, node.position.y);
+        maxX = Math.max(maxX, node.position.x + 200);
+        maxY = Math.max(maxY, node.position.y + 100);
+      });
+
+      const width = maxX - minX;
+      const height = maxY - minY;
+      const containerWidth = container.clientWidth;
+      const containerHeight = container.clientHeight;
+
+      scale = Math.min(containerWidth / width, containerHeight / height, 1) * 0.9;
+      translateX = (containerWidth - width * scale) / 2 - minX * scale;
+      translateY = (containerHeight - height * scale) / 2 - minY * scale;
+
+      updateTransform();
+    }
+
+    // Touch & Mouse Events
+    const canvas = document.getElementById('canvas');
+
+    canvas.addEventListener('mousedown', (e) => {
+      if (e.target === canvas || e.target.tagName === 'svg' || e.target.tagName === 'path') {
+        isDragging = true;
+        startX = e.clientX - translateX;
+        startY = e.clientY - translateY;
+        canvas.classList.add('dragging');
+      }
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        translateX = e.clientX - startX;
+        translateY = e.clientY - startY;
+        updateTransform();
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      isDragging = false;
+      canvas.classList.remove('dragging');
+    });
+
+    // Touch events
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        isDragging = true;
+        startX = e.touches[0].clientX - translateX;
+        startY = e.touches[0].clientY - translateY;
+      } else if (e.touches.length === 2) {
+        isDragging = false;
+        lastTouchDistance = getTouchDistance(e.touches);
+      }
+    });
+
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+
+      if (e.touches.length === 1 && isDragging) {
+        translateX = e.touches[0].clientX - startX;
+        translateY = e.touches[0].clientY - startY;
+        updateTransform();
+      } else if (e.touches.length === 2) {
+        const distance = getTouchDistance(e.touches);
+        const delta = distance / lastTouchDistance;
+        scale = Math.max(0.2, Math.min(3, scale * delta));
+        lastTouchDistance = distance;
+        updateTransform();
+      }
+    });
+
+    canvas.addEventListener('touchend', () => {
+      isDragging = false;
+    });
+
+    function getTouchDistance(touches) {
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    // Mouse wheel zoom
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? 0.9 : 1.1;
+      scale = Math.max(0.2, Math.min(3, scale * delta));
+      updateTransform();
+    }, { passive: false });
+  </script>
+</body>
+</html>`;
+
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+  saveAs(blob, filename);
+
+  toast.success('Mobile viewer exported! Open on your phone to test.', { duration: 5000, icon: '📱' });
+}

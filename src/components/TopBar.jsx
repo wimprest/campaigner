@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { Save, Upload, Download, Trash2, ChevronDown, FileJson, Mail, Globe, FolderOpen, CheckCircle, Search, X, Filter, FileCheck, Clock, Variable } from 'lucide-react'
+import { Save, Upload, Download, Trash2, ChevronDown, FileJson, Mail, Globe, FolderOpen, CheckCircle, Search, X, Filter, FileCheck, Clock, Variable, Smartphone } from 'lucide-react'
 
 export default function TopBar({
   campaignName,
@@ -10,6 +10,7 @@ export default function TopBar({
   onOpenBulkImport,
   onExportEmails,
   onExportHTML,
+  onExportMobileViewer,
   onExportSelection,
   onClear,
   onValidate,
@@ -68,7 +69,7 @@ export default function TopBar({
   }
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+    <header className="bg-white border-b border-gray-200 px-6 py-3 flex flex-wrap items-center justify-between gap-3">
       <div className="flex items-center space-x-4">
         <div className="flex items-center">
           <h1 className="text-xl font-bold text-gray-900">Campaign Builder</h1>
@@ -163,7 +164,7 @@ export default function TopBar({
         )}
       </div>
 
-      <div className="flex items-center space-x-2">
+      <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={onSave}
           className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
@@ -302,6 +303,19 @@ export default function TopBar({
                   <div className="flex-1">
                     <div className="font-medium">Export as HTML</div>
                     <div className="text-xs text-gray-500">Interactive viewer</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => {
+                    onExportMobileViewer()
+                    setShowExportMenu(false)
+                  }}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center text-sm border-t border-gray-200"
+                >
+                  <Smartphone className="w-4 h-4 mr-2 text-purple-600" />
+                  <div className="flex-1">
+                    <div className="font-medium">📱 Mobile Viewer</div>
+                    <div className="text-xs text-gray-500">Touch-friendly, share on phone</div>
                   </div>
                 </button>
               </div>
