@@ -631,10 +631,9 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
       position: absolute;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
       pointer-events: none;
       z-index: 0;
+      overflow: visible;
     }
 
     .edge {
@@ -1078,6 +1077,22 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
 
         nodesContainer.appendChild(nodeEl);
       });
+
+      // Calculate SVG dimensions based on actual layout
+      let svgWidth = 0;
+      let svgHeight = 0;
+      campaignData.nodes.forEach(node => {
+        const pos = node._renderPosition;
+        const nodeWidth = isMobile ? 300 : 200;
+        const nodeHeight = isMobile ? 140 : 100;
+        svgWidth = Math.max(svgWidth, pos.x + nodeWidth + 100);
+        svgHeight = Math.max(svgHeight, pos.y + nodeHeight + 100);
+      });
+
+      // Set explicit SVG dimensions
+      connectionsContainer.setAttribute('width', svgWidth);
+      connectionsContainer.setAttribute('height', svgHeight);
+      connectionsContainer.setAttribute('viewBox', \`0 0 \${svgWidth} \${svgHeight}\`);
 
       // Render connections
       const svgNS = "http://www.w3.org/2000/svg";
