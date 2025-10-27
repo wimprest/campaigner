@@ -870,14 +870,15 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
       .stats { font-size: 11px; gap: 8px; }
       .stat-badge { padding: 3px 6px; }
       .node {
-        min-width: 220px !important;
-        max-width: 320px !important;
-        padding: 16px !important;
-        font-size: 14px;
+        min-width: 300px !important;
+        max-width: 300px !important;
+        width: 300px !important;
+        padding: 20px !important;
+        font-size: 15px;
       }
-      .node-label { font-size: 14px !important; }
-      .node-preview { font-size: 12px !important; }
-      .control-btn { padding: 10px 14px; font-size: 14px; }
+      .node-label { font-size: 15px !important; font-weight: 600; }
+      .node-preview { font-size: 13px !important; line-height: 1.4; }
+      .control-btn { padding: 12px 16px; font-size: 15px; }
     }
 
     /* Loading */
@@ -967,17 +968,104 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
       }, 500);
     });
 
+    // Auto-layout algorithm for mobile: hierarchical vertical flow
+    function calculateMobileLayout(nodes, edges) {
+      if (nodes.length === 0) return {};
+
+      // Build adjacency map for graph traversal
+      const incomingEdges = {};
+      const outgoingEdges = {};
+      nodes.forEach(node => {
+        incomingEdges[node.id] = [];
+        outgoingEdges[node.id] = [];
+      });
+      edges.forEach(edge => {
+        if (incomingEdges[edge.target]) incomingEdges[edge.target].push(edge.source);
+        if (outgoingEdges[edge.source]) outgoingEdges[edge.source].push(edge.target);
+      });
+
+      // Find entry points (nodes with no incoming edges)
+      const entryPoints = nodes.filter(node => incomingEdges[node.id].length === 0);
+      if (entryPoints.length === 0) {
+        // No clear entry point - use first node
+        entryPoints.push(nodes[0]);
+      }
+
+      // Calculate layer for each node (longest path from entry)
+      const layers = {};
+      const visited = new Set();
+
+      function assignLayer(nodeId, layer) {
+        if (!layers[nodeId] || layer > layers[nodeId]) {
+          layers[nodeId] = layer;
+        }
+        if (visited.has(nodeId)) return;
+        visited.add(nodeId);
+
+        // Recursively assign layers to children
+        outgoingEdges[nodeId].forEach(childId => {
+          assignLayer(childId, layer + 1);
+        });
+      }
+
+      // Start from entry points
+      entryPoints.forEach(node => assignLayer(node.id, 0));
+
+      // Handle orphaned nodes (not reached from entry points)
+      nodes.forEach(node => {
+        if (layers[node.id] === undefined) {
+          layers[node.id] = 999; // Put at end
+        }
+      });
+
+      // Group nodes by layer
+      const layerGroups = {};
+      Object.entries(layers).forEach(([nodeId, layer]) => {
+        if (!layerGroups[layer]) layerGroups[layer] = [];
+        layerGroups[layer].push(nodeId);
+      });
+
+      // Calculate positions
+      const positions = {};
+      const nodeWidth = 300;
+      const nodeHeight = 140;
+      const verticalSpacing = 180;
+      const horizontalPadding = 37.5; // Center 300px nodes in 375px mobile viewport
+
+      Object.entries(layerGroups).sort((a, b) => Number(a[0]) - Number(b[0])).forEach(([layer, nodeIds], layerIndex) => {
+        const y = layerIndex * (nodeHeight + verticalSpacing) + 50; // Start 50px from top
+
+        // Center nodes horizontally if multiple in same layer
+        nodeIds.forEach((nodeId, index) => {
+          const x = horizontalPadding + (index * (nodeWidth + 20)); // 20px gap between nodes in same layer
+          positions[nodeId] = { x, y };
+        });
+      });
+
+      return positions;
+    }
+
     function renderCampaign() {
       const nodesContainer = document.getElementById('nodes');
       const connectionsContainer = document.getElementById('connections');
+
+      // Calculate mobile-optimized layout for small screens
+      const isMobile = window.innerWidth <= 600;
+      const mobilePositions = isMobile ? calculateMobileLayout(campaignData.nodes, campaignData.edges) : null;
 
       // Render nodes
       campaignData.nodes.forEach(node => {
         const nodeEl = document.createElement('div');
         nodeEl.className = \`node node-\${node.type}\`;
-        nodeEl.style.left = \`\${node.position.x}px\`;
-        nodeEl.style.top = \`\${node.position.y}px\`;
+
+        // Use mobile layout positions if on mobile, otherwise use original
+        const position = mobilePositions && mobilePositions[node.id] ? mobilePositions[node.id] : node.position;
+        nodeEl.style.left = \`\${position.x}px\`;
+        nodeEl.style.top = \`\${position.y}px\`;
         nodeEl.onclick = () => showNodeDetails(node);
+
+        // Store position for edge rendering
+        node._renderPosition = position;
 
         const preview = getNodePreview(node);
         nodeEl.innerHTML = \`
@@ -1007,14 +1095,27 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
 
         if (sourceNode && targetNode) {
           const path = document.createElementNS(svgNS, "path");
-          const x1 = sourceNode.position.x + 100;
-          const y1 = sourceNode.position.y + 40;
-          const x2 = targetNode.position.x + 100;
-          const y2 = targetNode.position.y + 40;
 
-          const d = \`M \${x1} \${y1} C \${x1 + 100} \${y1}, \${x2 - 100} \${y2}, \${x2} \${y2}\`;
+          // Use render position (mobile layout if mobile, otherwise original)
+          const sourcePos = sourceNode._renderPosition;
+          const targetPos = targetNode._renderPosition;
+
+          // Calculate connection points (center bottom of source, center top of target)
+          const nodeWidth = isMobile ? 300 : 200;
+          const nodeHeight = isMobile ? 140 : 100;
+
+          const x1 = sourcePos.x + nodeWidth / 2;
+          const y1 = sourcePos.y + nodeHeight; // Bottom of source
+          const x2 = targetPos.x + nodeWidth / 2;
+          const y2 = targetPos.y; // Top of target
+
+          // Curved path with control points
+          const controlOffset = Math.abs(y2 - y1) * 0.5;
+          const d = \`M \${x1} \${y1} C \${x1} \${y1 + controlOffset}, \${x2} \${y2 - controlOffset}, \${x2} \${y2}\`;
+
           path.setAttribute("d", d);
           path.setAttribute("class", "edge");
+          path.setAttribute("marker-end", "url(#arrowhead)");
           connectionsContainer.appendChild(path);
         }
       });
@@ -1292,12 +1393,16 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
     }
 
     function zoomIn() {
-      scale = Math.min(scale * 1.2, 3);
+      const isMobile = window.innerWidth <= 600;
+      const maxScale = isMobile ? 2.0 : 3.0;
+      scale = Math.min(scale * 1.2, maxScale);
       updateTransform();
     }
 
     function zoomOut() {
-      scale = Math.max(scale / 1.2, 0.2);
+      const isMobile = window.innerWidth <= 600;
+      const minScale = isMobile ? 0.4 : 0.2;
+      scale = Math.max(scale / 1.2, minScale);
       updateTransform();
     }
 
@@ -1314,17 +1419,18 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
 
       if (nodes.length === 0) return;
 
-      // Use larger node dimensions for mobile (match actual rendered size)
       const isMobile = window.innerWidth <= 600;
-      const nodeWidth = isMobile ? 280 : 200;
+      const nodeWidth = isMobile ? 300 : 200;
       const nodeHeight = isMobile ? 140 : 100;
 
+      // Use render positions (mobile layout or original)
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
       nodes.forEach(node => {
-        minX = Math.min(minX, node.position.x);
-        minY = Math.min(minY, node.position.y);
-        maxX = Math.max(maxX, node.position.x + nodeWidth);
-        maxY = Math.max(maxY, node.position.y + nodeHeight);
+        const pos = node._renderPosition || node.position;
+        minX = Math.min(minX, pos.x);
+        minY = Math.min(minY, pos.y);
+        maxX = Math.max(maxX, pos.x + nodeWidth);
+        maxY = Math.max(maxY, pos.y + nodeHeight);
       });
 
       const width = maxX - minX;
@@ -1332,14 +1438,23 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
       const containerWidth = container.clientWidth;
       const containerHeight = container.clientHeight;
 
-      // Set minimum scale to prevent nodes from being too tiny
-      const minScale = isMobile ? 0.5 : 0.3;
-      const maxScale = isMobile ? 1.2 : 1;
-      const calculatedScale = Math.min(containerWidth / width, containerHeight / height, maxScale) * 0.9;
-      scale = Math.max(calculatedScale, minScale);
+      if (isMobile) {
+        // Mobile: Start at 100% zoom (1.0) for readable nodes
+        // Allow zooming from 40% to 200%
+        scale = 1.0;
+        // Center on first node horizontally, start at top
+        translateX = (containerWidth - nodeWidth) / 2 - (nodes[0]._renderPosition?.x || nodes[0].position.x);
+        translateY = 50; // Small top padding
+      } else {
+        // Desktop: Fit entire campaign to view
+        const minScale = 0.3;
+        const maxScale = 1;
+        const calculatedScale = Math.min(containerWidth / width, containerHeight / height, maxScale) * 0.9;
+        scale = Math.max(calculatedScale, minScale);
 
-      translateX = (containerWidth - width * scale) / 2 - minX * scale;
-      translateY = (containerHeight - height * scale) / 2 - minY * scale;
+        translateX = (containerWidth - width * scale) / 2 - minX * scale;
+        translateY = (containerHeight - height * scale) / 2 - minY * scale;
+      }
 
       updateTransform();
     }
@@ -1414,7 +1529,10 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
         e.preventDefault();
         const distance = getTouchDistance(e.touches);
         const delta = distance / lastTouchDistance;
-        scale = Math.max(0.2, Math.min(3, scale * delta));
+        const isMobile = window.innerWidth <= 600;
+        const minScale = isMobile ? 0.4 : 0.2;
+        const maxScale = isMobile ? 2.0 : 3.0;
+        scale = Math.max(minScale, Math.min(maxScale, scale * delta));
         lastTouchDistance = distance;
         updateTransform();
       }
@@ -1445,7 +1563,10 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
     canvas.addEventListener('wheel', (e) => {
       e.preventDefault();
       const delta = e.deltaY > 0 ? 0.9 : 1.1;
-      scale = Math.max(0.2, Math.min(3, scale * delta));
+      const isMobile = window.innerWidth <= 600;
+      const minScale = isMobile ? 0.4 : 0.2;
+      const maxScale = isMobile ? 2.0 : 3.0;
+      scale = Math.max(minScale, Math.min(maxScale, scale * delta));
       updateTransform();
     }, { passive: false });
   </script>
