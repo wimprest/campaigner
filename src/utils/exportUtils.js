@@ -536,6 +536,14 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
       right: 0;
       bottom: 60px;
       overflow: hidden;
+      touch-action: none; /* Prevent default touch behaviors like pull-to-refresh */
+      -webkit-user-select: none;
+      user-select: none;
+      cursor: grab;
+    }
+
+    .canvas-container:active {
+      cursor: grabbing;
     }
 
     .canvas {
@@ -736,29 +744,44 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
       color: #333;
       font-size: 14px;
       line-height: 1.6;
-      white-space: pre-wrap;
+      white-space: normal;
       word-wrap: break-word;
     }
 
-    /* Normalize email content spacing */
+    /* Normalize email content spacing - aggressive rules to eliminate ReactQuill gaps */
     .field-value p {
-      margin: 0 0 8px 0;
+      margin: 0 0 8px 0 !important;
+      line-height: 1.5 !important;
     }
     .field-value p:last-child {
-      margin-bottom: 0;
+      margin-bottom: 0 !important;
+    }
+    .field-value p:empty {
+      display: none !important;
+    }
+    .field-value p br {
+      display: none !important;
     }
     .field-value ul, .field-value ol {
-      margin: 8px 0;
-      padding-left: 24px;
+      margin: 8px 0 !important;
+      padding-left: 24px !important;
+    }
+    .field-value ul:first-child, .field-value ol:first-child {
+      margin-top: 0 !important;
     }
     .field-value li {
-      margin: 4px 0;
+      margin: 2px 0 !important;
+      line-height: 1.5 !important;
     }
     .field-value strong {
       font-weight: 600;
     }
     .field-value br {
-      display: none;
+      display: none !important;
+    }
+    /* Remove any stray breaks or empty paragraphs */
+    .field-value > br {
+      display: none !important;
     }
 
     .question-item {
@@ -1321,15 +1344,21 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
       updateTransform();
     }
 
-    // Touch & Mouse Events
+    // Touch & Mouse Events - Enhanced for mobile
     const canvas = document.getElementById('canvas');
+    const container = document.querySelector('.canvas-container');
+    let touchStartTime = 0;
+    let hasMoved = false;
+    let touchTarget = null;
 
-    canvas.addEventListener('mousedown', (e) => {
-      if (e.target === canvas || e.target.tagName === 'svg' || e.target.tagName === 'path') {
+    // Mouse events (desktop) - Allow drag on background, but not on nodes
+    container.addEventListener('mousedown', (e) => {
+      // Only start dragging if clicking on canvas/SVG/edges, not on nodes
+      if (!e.target.closest('.node')) {
         isDragging = true;
         startX = e.clientX - translateX;
         startY = e.clientY - translateY;
-        canvas.classList.add('dragging');
+        container.style.cursor = 'grabbing';
       }
     });
 
@@ -1343,39 +1372,67 @@ export const exportAsMobileViewer = (nodes, edges, campaignName = 'campaign', va
 
     document.addEventListener('mouseup', () => {
       isDragging = false;
-      canvas.classList.remove('dragging');
+      container.style.cursor = 'grab';
     });
 
-    // Touch events
-    canvas.addEventListener('touchstart', (e) => {
+    // Touch events (mobile) - Allow pan everywhere, distinguish from taps
+    container.addEventListener('touchstart', (e) => {
+      touchStartTime = Date.now();
+      hasMoved = false;
+      touchTarget = e.target;
+
       if (e.touches.length === 1) {
-        isDragging = true;
+        // Single finger - prepare for pan (but might be a tap)
         startX = e.touches[0].clientX - translateX;
         startY = e.touches[0].clientY - translateY;
       } else if (e.touches.length === 2) {
+        // Two fingers - definitely pinch zoom
+        e.preventDefault();
         isDragging = false;
         lastTouchDistance = getTouchDistance(e.touches);
       }
-    });
+    }, { passive: false });
 
-    canvas.addEventListener('touchmove', (e) => {
-      e.preventDefault();
+    container.addEventListener('touchmove', (e) => {
+      hasMoved = true;
 
-      if (e.touches.length === 1 && isDragging) {
-        translateX = e.touches[0].clientX - startX;
-        translateY = e.touches[0].clientY - startY;
-        updateTransform();
+      if (e.touches.length === 1) {
+        // Single finger pan
+        const moveDistance = Math.abs(e.touches[0].clientX - startX - translateX) +
+                            Math.abs(e.touches[0].clientY - startY - translateY);
+
+        // Only start panning if moved more than 10px (avoids accidental pans on taps)
+        if (moveDistance > 10) {
+          e.preventDefault();
+          isDragging = true;
+          translateX = e.touches[0].clientX - startX;
+          translateY = e.touches[0].clientY - startY;
+          updateTransform();
+        }
       } else if (e.touches.length === 2) {
+        // Pinch zoom
+        e.preventDefault();
         const distance = getTouchDistance(e.touches);
         const delta = distance / lastTouchDistance;
         scale = Math.max(0.2, Math.min(3, scale * delta));
         lastTouchDistance = distance;
         updateTransform();
       }
-    });
+    }, { passive: false });
 
-    canvas.addEventListener('touchend', () => {
+    container.addEventListener('touchend', (e) => {
+      const touchDuration = Date.now() - touchStartTime;
+
+      // If touch was quick (<200ms) and didn't move much, treat as tap on node
+      if (!hasMoved && touchDuration < 200 && touchTarget && touchTarget.closest('.node')) {
+        const node = touchTarget.closest('.node');
+        if (node && node.onclick) {
+          node.onclick();
+        }
+      }
+
       isDragging = false;
+      touchTarget = null;
     });
 
     function getTouchDistance(touches) {

@@ -1,0 +1,22 @@
+{
+  "name": "campaign-mobile-viewer-tests",
+  "version": "1.0.0",
+  "description": "Playwright tests for Campaign Builder mobile viewer",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test-mobile-viewer.js",
+    "test:export": "node test-export-and-view.js",
+    "test:modal": "node test-modal-formatting.js",
+    "install-browsers": "playwright install chromium"
+  },
+  "keywords": [
+    "playwright",
+    "testing",
+    "campaign-builder"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "playwright": "^1.55.1"
+  }
+}
